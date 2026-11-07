@@ -1,0 +1,220 @@
+import { ReactNode, useState } from "react";
+import { Notice, label } from "../data";
+import { coord, limitWord, margin, num, withUnit } from "../format";
+import { go, href } from "../router";
+import { queueQuestion } from "../chatStore";
+import { adminRef, noticeRef, stationRef } from "../links";
+import { InlineText, Ref } from "./RichText";
+
+const STATION_PAGE = 20;
+
+function Bars({ notice }: { notice: Notice }) {
+  if (notice.value === null || notice.limit === null) return <p>No applicable limit for this notice.</p>;
+  const floor = Math.min(notice.value, notice.limit) - 15;
+  const ceil = Math.max(notice.value, notice.limit) + 5;
+  const w = (v: number) => `${((v - floor) / (ceil - floor)) * 100}%`;
+  return (
+    <div className="bars">
+      <div className="bar-row">
+        <span className="strong">{notice.kind === "Space" ? "PFD" : "Field"}</span>
+        <div className="bar-track">
+          <div className="bar-fill" style={{ width: w(notice.value) }} />
+        </div>
+        <span>{withUnit(notice.value, notice.unit)}</span>
+      </div>
+      <div className="bar-row">
+        <span className="strong">{notice.kind === "Space" ? "Limit" : "Threshold"}</span>
+        <div className="bar-track">
+          <div className="bar-fill soft" style={{ width: w(notice.limit) }} />
+        </div>
+        <span>{withUnit(notice.limit, notice.unit)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function NoticeDetail({ notice }: { notice: Notice }) {
+  const [shown, setShown] = useState(STATION_PAGE);
+  const word = limitWord(notice.kind);
+  const space = notice.kind === "Space";
+  const facts: [string, ReactNode][] = [
+    ["Status", label(notice.status)],
+    ["Worst margin", margin(notice.worstMarginDb, word)],
+    ["Finnish stations affected", String(notice.stationsAffected)],
+    [
+      "Administration",
+      <Ref to={adminRef(notice.administration)}>
+        {notice.administrationName} ({notice.administration})
+      </Ref>,
+    ],
+    [space ? "Notice" : "Assignment", notice.noticeId],
+    ["Provision", notice.provision],
+    ["Protected band", notice.band],
+    ["Reference bandwidth", notice.referenceBandwidth],
+  ];
+  if (notice.publicationDate) facts.push(["Published", notice.publicationDate]);
+  if (notice.elevationDeg !== null) facts.push(["Worst elevation", num(notice.elevationDeg) + "°"]);
+  if (notice.distanceKm !== undefined) facts.push(["Distance to Finland", num(notice.distanceKm) + " km"]);
+  if (space) facts.push(["Cases of concern", String(notice.casesOfConcern)]);
+
+  const c = notice.citation;
+  const pages = [c.printedPage && `printed page ${c.printedPage}`, c.pdfPage && `PDF page ${c.pdfPage}`].filter(Boolean);
+
+  return (
+    <div className="page">
+      <div className="detail-head">
+        <button className="plain" onClick={() => history.back()}>
+          Back
+        </button>
+        <h1>{notice.name}</h1>
+        <div className="actions">
+          <button onClick={() => go({ view: "letter", scope: "notice", key: notice.key })}>
+            Draft letter for this notice
+          </button>
+          <button
+            className="plain"
+            onClick={() => go({ view: "letter", scope: "administration", key: notice.administration })}
+          >
+            Draft letter for {notice.administrationName}
+          </button>
+          <button
+            className="plain"
+            onClick={() => {
+              queueQuestion(`Explain ${notice.name} notice ${notice.noticeId}`, noticeRef(notice.key));
+              go({ view: "chat" });
+            }}
+          >
+            Ask about this notice
+          </button>
+        </div>
+      </div>
+
+      <section>
+        <dl className="facts">
+          {facts.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="grid2">
+        <div>
+          <h2>{space ? "PFD vs limit" : "Field strength vs threshold"}</h2>
+          <Bars notice={notice} />
+        </div>
+        <div>
+          <h2>Governing rule</h2>
+          <div className="rule">
+            <p className="strong">{notice.rule.id || "No governing rule"}</p>
+            {notice.rule.text && <p>{notice.rule.text}</p>}
+            <p>{[c.document, c.provision, ...pages].filter(Boolean).join(", ")}</p>
+            {c.url && (
+              <p>
+                <a href={c.url} target="_blank" rel="noreferrer">
+                  Open source document
+                </a>
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>{space ? "Affected Finnish stations" : "Assessment points"}</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{space ? "Station" : "Point"}</th>
+                <th>Location</th>
+                <th>{space ? "Protected band" : "Frequency"}</th>
+                <th>Status</th>
+                {!space && <th className="num">Distance</th>}
+                <th className="num">{space ? "PFD" : "Field strength"}</th>
+                <th className="num">{space ? "Limit" : "Threshold"}</th>
+                <th className="num">Margin</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notice.stations.slice(0, shown).map((s, i) => (
+                <tr key={s.id + i}>
+                  <td className="strong">{/^\d+$/.test(s.id) ? <Ref to={stationRef(s.id)}>{s.id}</Ref> : s.id}</td>
+                  <td className="nowrap">{coord(s.latitude, s.longitude)}</td>
+                  <td className="nowrap">{s.band}</td>
+                  <td className="nowrap">{label(s.status)}</td>
+                  {!space && <td className="num">{num(s.distanceKm)} km</td>}
+                  <td className="num">{num(s.value)}</td>
+                  <td className="num">{num(s.limit)}</td>
+                  <td className="num">{margin(s.marginDb, word)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {shown < notice.stations.length && (
+          <div className="more">
+            <button onClick={() => setShown(notice.stations.length)}>
+              Show all {notice.stations.length} {notice.kind === "Space" ? "cases" : "points"}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="grid2">
+        <div>
+          <h2>Assumptions</h2>
+          <ul className="list">
+            {notice.assumptions.map((a) => (
+              <li key={a}>
+                <InlineText text={a} />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2>Caveats</h2>
+          <ul className="list">
+            {notice.caveats.map((c) => (
+              <li key={c}>
+                <InlineText text={c} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2>Source rows</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dataset</th>
+                <th>Table</th>
+                <th>Rows</th>
+                <th>SHA256</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notice.sourceRows.map((r) => (
+                <tr key={r.table + r.rows}>
+                  <td>{r.dataset}</td>
+                  <td>{r.table}</td>
+                  <td>{r.rows}</td>
+                  <td>{r.sha256}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <a href={href({ view: "home" })}>Back to all notices</a>
+      </section>
+    </div>
+  );
+}

@@ -6,7 +6,7 @@
 | `backend/src/app/ingestion/` | Extract datasets, normalize values, and record provenance. |
 | `backend/src/app/db/` | PostgreSQL connections, data loading, and SQL migrations. |
 | `backend/tests/` | Unit tests and local database integration checks. |
-| `frontend/` | Placeholder for the future web interface. |
+| `frontend/` | Assessment web UI (React, Vite). Run `python backend/scripts/export_frontend_data.py` after each calculation run, then `npm install` and `npm run dev` inside `frontend/`. |
 | `docs/` | Reference documents, database instructions, and data notes. |
 | `data/` | Original challenge datasets. |
 | `output/` | Generated exports, logs, and test artifacts; ignored by Git. |

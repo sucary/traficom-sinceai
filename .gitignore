@@ -12,3 +12,6 @@ build/
 dist/
 *.mdb
 tmp/
+node_modules/
+*.tsbuildinfo
+frontend/public/data/
