@@ -32,7 +32,7 @@ function Bars({ chart, rows }: { chart: Chart; rows: ChartRow[] }) {
   const max = Math.max(1, ...chart.rows.flatMap((r) => [r.value, r.previous ?? 0]));
   const pairs = chart.form === "pairs";
   return (
-    <>
+    <div className="bar-chart-content">
       {pairs && (
         <div className="legend">
           <span>
@@ -64,7 +64,7 @@ function Bars({ chart, rows }: { chart: Chart; rows: ChartRow[] }) {
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -87,9 +87,7 @@ function ChartCard({ chart }: { chart: Chart }) {
         {hidden > 0 ? (
           <button onClick={() => go({ view: "stats", id: chart.id })}>Show all {chart.rows.length}</button>
         ) : (
-          <button className="plain" onClick={() => go({ view: "stats", id: chart.id })}>
-            Open as list
-          </button>
+          <button onClick={() => go({ view: "stats", id: chart.id })}>Open as list</button>
         )}
       </div>
     </div>

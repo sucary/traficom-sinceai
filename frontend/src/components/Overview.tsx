@@ -1,5 +1,6 @@
 import { Issue, label } from "../data";
 import { count } from "../format";
+import { go } from "../router";
 
 const order = [
   "exceeds_limit",
@@ -28,6 +29,10 @@ export function Overview({ issue }: { issue: Issue }) {
           {label(s)}
         </div>
       ))}
+      <button className="stat impact-link" onClick={() => go({ view: "usage" })}>
+        <span>Impact on Finnish use</span>
+        <span className="impact-arrow" aria-hidden="true">→</span>
+      </button>
     </div>
   );
 }

@@ -9,7 +9,8 @@ export type Route =
   | { view: "administration"; code: string }
   | { view: "stats"; id: string }
   | { view: "notices"; scope: "issue" | "administration"; key: string }
-  | { view: "cases"; key: string };
+  | { view: "cases"; key: string }
+  | { view: "usage" };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -41,6 +42,8 @@ function parse(hash: string): Route {
     case "cases":
       if (parts[1]) return { view: "cases", key: parts[1] };
       break;
+    case "usage":
+      return { view: "usage" };
   }
   return { view: "home" };
 }
@@ -67,6 +70,8 @@ export function href(route: Route): string {
       return `#/notices/${route.scope}/${enc(route.key)}`;
     case "cases":
       return `#/cases/${enc(route.key)}`;
+    case "usage":
+      return "#/usage";
   }
 }
 

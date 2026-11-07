@@ -1,5 +1,6 @@
 import { Assessment } from "../data";
 import { NoticeList } from "../components/NoticeList";
+import { BackIcon } from "../components/Icons";
 
 /** Every notice of concern for one issue or one administration. */
 export function NoticesPage({
@@ -23,7 +24,8 @@ export function NoticesPage({
   return (
     <div className="page">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>Notices of concern in {title}</h1>

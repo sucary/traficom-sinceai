@@ -5,7 +5,7 @@ import { refToRoute } from "../links";
 import { Route, go, href } from "../router";
 import { InlineText } from "./RichText";
 
-export function TopBar({ route }: { route: Route }) {
+export function TopBar({ route, embedded = false }: { route: Route; embedded?: boolean }) {
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [read, setRead] = useState<Set<string>>(new Set());
@@ -34,15 +34,13 @@ export function TopBar({ route }: { route: Route }) {
   useEffect(() => setOpen(false), [route]);
 
   const inChat = route.view === "chat";
+  const inUsage = route.view === "usage";
 
   return (
-    <header className="topbar">
-      <div className="page">
+    <header className={"topbar" + (embedded ? " embedded" : "")}>
+      <div className={embedded ? "topbar-inner" : "page"}>
         <nav className="mainnav" aria-label="Main">
-          <a className="brand" href={href({ view: "home" })}>
-            Traficom Assessment
-          </a>
-          <a href={href({ view: "home" })} aria-current={!inChat ? "page" : undefined}>
+          <a href={href({ view: "home" })} aria-current={!inChat && !inUsage ? "page" : undefined}>
             Overview
           </a>
           <a href={href({ view: "chat" })} aria-current={inChat ? "page" : undefined}>
@@ -58,11 +56,6 @@ export function TopBar({ route }: { route: Route }) {
             <div className="panel" role="dialog" aria-label="Notifications">
               <div className="panel-head">
                 <h3>Notifications</h3>
-                {unread > 0 && (
-                  <button className="plain" onClick={() => setRead(new Set(items.map((i) => i.id)))}>
-                    Mark all read
-                  </button>
-                )}
               </div>
               {items.length === 0 && <p className="item">No notifications</p>}
               {items.map((n) => (

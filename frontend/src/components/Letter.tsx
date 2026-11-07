@@ -5,6 +5,8 @@ import { lettersFor } from "../letters";
 import { noticeRef } from "../links";
 import { go } from "../router";
 import { Ref } from "./RichText";
+import { BackIcon } from "./Icons";
+import { Dropdown } from "./Dropdown";
 
 export function Letter({
   data,
@@ -58,36 +60,34 @@ export function Letter({
   return (
     <div className="page letter">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>Draft letter</h1>
       </div>
       <section>
         <div className="controls">
-          <select
-            aria-label="Letter scope"
+          <Dropdown
+            ariaLabel="Letter scope"
             value={`${scope}|${keyValue}`}
-            onChange={(e) => {
-              const [s, k] = e.target.value.split("|");
+            onChange={(value) => {
+              const [s, k] = value.split("|");
               go({ view: "letter", scope: s as "notice" | "administration", key: k });
             }}
-          >
-            <optgroup label="Administration">
-              {administrations.map(([code, name]) => (
-                <option key={code} value={`administration|${code}`}>
-                  {name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Notice">
-              {data.notices.map((n) => (
-                <option key={n.key} value={`notice|${n.key}`}>
-                  {n.name} {n.noticeId}
-                </option>
-              ))}
-            </optgroup>
-          </select>
+            options={[
+              ...administrations.map(([code, name]) => ({
+                value: `administration|${code}`,
+                label: name,
+                group: "Administration",
+              })),
+              ...data.notices.map((n) => ({
+                value: `notice|${n.key}`,
+                label: `${n.name} ${n.noticeId}`,
+                group: "Notice",
+              })),
+            ]}
+          />
           <button
             onClick={() => {
               navigator.clipboard?.writeText(text);

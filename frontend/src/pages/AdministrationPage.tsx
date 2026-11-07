@@ -3,6 +3,7 @@ import { queueQuestion } from "../chatStore";
 import { NoticeList } from "../components/NoticeList";
 import { adminRef } from "../links";
 import { go } from "../router";
+import { BackIcon } from "../components/Icons";
 
 export function AdministrationPage({ data, code }: { data: Assessment; code: string }) {
   const notices = data.notices.filter((n) => n.administration === code);
@@ -13,26 +14,13 @@ export function AdministrationPage({ data, code }: { data: Assessment; code: str
   return (
     <div className="page">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>
           {name} ({code})
         </h1>
-        <div className="actions">
-          <button onClick={() => go({ view: "letter", scope: "administration", key: code })}>
-            Draft letter for {name}
-          </button>
-          <button
-            className="plain"
-            onClick={() => {
-              queueQuestion(`Summarise the notices from ${name}`, adminRef(code));
-              go({ view: "chat" });
-            }}
-          >
-            Ask about {name}
-          </button>
-        </div>
       </div>
 
       <section>
@@ -49,6 +37,20 @@ export function AdministrationPage({ data, code }: { data: Assessment; code: str
             <strong>{stations.size}</strong>
             Finnish stations involved
           </div>
+        </div>
+        <div className="actions detail-actions">
+          <button onClick={() => go({ view: "letter", scope: "administration", key: code })}>
+            Draft letter for {name}
+          </button>
+          <button
+            className="plain"
+            onClick={() => {
+              queueQuestion(`Summarise the notices from ${name}`, adminRef(code));
+              go({ view: "chat" });
+            }}
+          >
+            Ask about {name}
+          </button>
         </div>
       </section>
 

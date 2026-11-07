@@ -1,7 +1,7 @@
 // Renders text from the assistant, notifications or anywhere else.
-// Supports paragraphs, "- " lists, **bold** and [label](ref) links, and links known
+// Supports paragraphs, headings, "- " and "1. " lists, Markdown tables, **bold** and [label](ref) links, and links known
 // entity names (satellites, notices, administrations, stations, issues) automatically.
-import { Fragment, ReactNode, useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { useData } from "../data";
 import { buildEntityIndex, entityMatcher, refHref } from "../links";
 
@@ -80,27 +80,115 @@ export function inline(text: string, m: Matcher, key = "i", auto = true): ReactN
   return out;
 }
 
+type Block =
+  | { kind: "p"; text: string }
+  | { kind: "h"; text: string }
+  | { kind: "ul" | "ol"; items: string[] }
+  | { kind: "table"; head: string[]; rows: string[][] };
+
+const BULLET = /^\s*[-*] /;
+const NUMBERED = /^\s*\d+[.)]\s+/;
+const HEADING = /^\s*#{1,4}\s+/;
+const TABLE_ROW = /^\s*\|.*\|\s*$/;
+const TABLE_RULE = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+
+function cells(line: string): string[] {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+}
+
+// Line-based parser: paragraphs, headings, "- " and "1. " lists, and Markdown tables.
+// Blocks do not need blank lines between them (models often omit them).
+export function parseBlocks(text: string): Block[] {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const blocks: Block[] = [];
+  let para: string[] = [];
+  const flush = () => {
+    if (para.length) blocks.push({ kind: "p", text: para.join(" ") });
+    para = [];
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) {
+      flush();
+      continue;
+    }
+    if (TABLE_ROW.test(line) && i + 1 < lines.length && TABLE_RULE.test(lines[i + 1])) {
+      flush();
+      const head = cells(line);
+      const rows: string[][] = [];
+      i += 2;
+      for (; i < lines.length && TABLE_ROW.test(lines[i]); i++) rows.push(cells(lines[i]));
+      i--;
+      blocks.push({ kind: "table", head, rows });
+      continue;
+    }
+    if (HEADING.test(line)) {
+      flush();
+      blocks.push({ kind: "h", text: line.replace(HEADING, "") });
+      continue;
+    }
+    const list = BULLET.test(line) ? "ul" : NUMBERED.test(line) ? "ol" : null;
+    if (list) {
+      flush();
+      const item = line.replace(list === "ul" ? BULLET : NUMBERED, "");
+      const prev = blocks[blocks.length - 1];
+      if (prev && prev.kind === list) prev.items.push(item);
+      else blocks.push({ kind: list, items: [item] });
+      continue;
+    }
+    para.push(line.trim());
+  }
+  flush();
+  return blocks;
+}
+
 export function RichText({ text, autoLinks = true }: { text: string; autoLinks?: boolean }) {
   const m = useMatcher();
-  const blocks = text.split(/\n{2,}/);
+  const blocks = parseBlocks(text);
   return (
     <div className="rich">
-      {blocks.map((block, bi) => {
-        const lines = block.split("\n");
-        const intro = lines.filter((l) => !/^\s*[-*] /.test(l));
-        const items = lines.filter((l) => /^\s*[-*] /.test(l));
-        return (
-          <Fragment key={bi}>
-            {intro.length > 0 && <p>{inline(intro.join(" "), m, `p${bi}`, autoLinks)}</p>}
-            {items.length > 0 && (
-              <ul>
-                {items.map((l, li) => (
-                  <li key={li}>{inline(l.replace(/^\s*[-*] /, ""), m, `l${bi}${li}`, autoLinks)}</li>
+      {blocks.map((b, bi) => {
+        const k = `b${bi}`;
+        switch (b.kind) {
+          case "p":
+            return <p key={k}>{inline(b.text, m, k, autoLinks)}</p>;
+          case "h":
+            return <h4 key={k}>{inline(b.text, m, k, autoLinks)}</h4>;
+          case "ul":
+          case "ol": {
+            const List = b.kind;
+            return (
+              <List key={k}>
+                {b.items.map((item, li) => (
+                  <li key={li}>{inline(item, m, `${k}l${li}`, autoLinks)}</li>
                 ))}
-              </ul>
-            )}
-          </Fragment>
-        );
+              </List>
+            );
+          }
+          case "table":
+            return (
+              <div key={k} className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      {b.head.map((h, hi) => (
+                        <th key={hi}>{inline(h, m, `${k}h${hi}`, autoLinks)}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {b.rows.map((row, ri) => (
+                      <tr key={ri}>
+                        {row.map((cell, ci) => (
+                          <td key={ci}>{inline(cell, m, `${k}r${ri}c${ci}`, autoLinks)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+        }
       })}
     </div>
   );

@@ -19,7 +19,7 @@ export interface Chart {
 }
 
 /** Rows that fit inside a card of fixed size; the rest is behind "Show all". */
-export const CARD_ROWS: Record<Chart["form"], number> = { columns: 6, bars: 8, pairs: 5 };
+export const CARD_ROWS: Record<Chart["form"], number> = { columns: 6, bars: 8, pairs: 4 };
 
 export function charts(data: Assessment): Chart[] {
   const byAdmin = new Map<string, number>();

@@ -1,3 +1,4 @@
+import { UsagePage } from "./pages/UsagePage";
 import { useEffect, useState } from "react";
 import { Assessment, DataContext, findNotice, useAssessment } from "./data";
 import { useRoute } from "./router";
@@ -13,6 +14,7 @@ import { AdministrationPage } from "./pages/AdministrationPage";
 import { StatsPage } from "./pages/StatsPage";
 import { NoticesPage } from "./pages/NoticesPage";
 import { CasesPage } from "./pages/CasesPage";
+import { Dropdown } from "./components/Dropdown";
 
 const LIST_PAGE = 15;
 import { go } from "./router";
@@ -32,17 +34,12 @@ function Home({ data, issueId: requested }: { data: Assessment; issueId?: string
       <section>
         <div className="section-head">
           <h2>Issue overview</h2>
-          <select
-            aria-label="Issue"
+          <Dropdown
+            ariaLabel="Issue"
             value={issueId}
-            onChange={(e) => go({ view: "home", issueId: e.target.value })}
-          >
-            {data.issues.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.label} {i.kind}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => go({ view: "home", issueId: value })}
+            options={data.issues.map((i) => ({ value: i.id, label: `${i.label} ${i.kind}` }))}
+          />
         </div>
         {issue && <Overview issue={issue} />}
       </section>
@@ -80,7 +77,8 @@ export function App() {
 
   let body = null;
   if (route.view === "chat") {
-    body = <ChatPage conversationId={route.conversationId} />;
+    // The chat sidebar spans the full height, so the header lives inside the chat column.
+    body = <ChatPage conversationId={route.conversationId} header={<TopBar route={route} embedded />} />;
   } else if (failed) {
     body = (
       <div className="page">
@@ -112,6 +110,9 @@ export function App() {
       case "notices":
         body = <NoticesPage data={data} scope={route.scope} keyValue={route.key} />;
         break;
+      case "usage":
+        body = <UsagePage data={data} />;
+        break;
       case "cases": {
         const n = findNotice(data, route.key);
         body = n ? <CasesPage notice={n} /> : <NotFound what="Notice" />;
@@ -124,7 +125,7 @@ export function App() {
 
   return (
     <DataContext.Provider value={data}>
-      <TopBar route={route} />
+      {route.view !== "chat" && <TopBar route={route} />}
       <main>{body}</main>
     </DataContext.Provider>
   );

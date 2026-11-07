@@ -6,6 +6,7 @@ import { queueQuestion } from "../chatStore";
 import { adminRef, noticeRef, stationRef } from "../links";
 import { InlineText, Ref } from "./RichText";
 import { StationTable } from "./StationTable";
+import { BackIcon } from "./Icons";
 
 const STATION_PAGE = 20;
 
@@ -63,11 +64,23 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
   return (
     <div className="page">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>{notice.name}</h1>
-        <div className="actions">
+      </div>
+
+      <section>
+        <dl className="facts">
+          {facts.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="actions detail-actions">
           <button onClick={() => go({ view: "letter", scope: "notice", key: notice.key })}>
             Draft letter for this notice
           </button>
@@ -87,17 +100,6 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
             Ask about this notice
           </button>
         </div>
-      </div>
-
-      <section>
-        <dl className="facts">
-          {facts.map(([k, v]) => (
-            <div key={k}>
-              <dt>{k}</dt>
-              <dd>{v}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       <section className="grid2">
@@ -147,6 +149,19 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
               </li>
             ))}
           </ul>
+          {notice.otherCaseCaveats && notice.otherCaseCaveats.length > 0 && (
+            <>
+              <h3>Other cases of this notice</h3>
+              <p>These apply to other cases of this notice, not to the worst case values above.</p>
+              <ul className="list">
+                {notice.otherCaseCaveats.map((c) => (
+                  <li key={c.text}>
+                    <InlineText text={`${c.text} (${c.cases} ${c.cases === 1 ? "case" : "cases"})`} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       </section>
 

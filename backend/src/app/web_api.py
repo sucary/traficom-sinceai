@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
@@ -17,12 +18,13 @@ from .config import PROJECT_ROOT
 
 ASSESSMENT_PATH = PROJECT_ROOT / "frontend" / "public" / "data" / "assessment.json"
 EXPORT_SCRIPT = PROJECT_ROOT / "backend" / "scripts" / "export_frontend_data.py"
-CORS_ORIGINS = {
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-}
+# Local development only: the Vite dev/preview server on any port (it moves to 5174, 5175, ...
+# when 5173 is taken). Other origins get no CORS header.
+LOCAL_ORIGIN = re.compile(r"^http://(localhost|127\.0\.0\.1):\d{1,5}$")
+
+
+def is_allowed_origin(origin):
+    return bool(origin) and LOCAL_ORIGIN.fullmatch(origin) is not None
 
 
 def load_assessment(path=ASSESSMENT_PATH):
@@ -116,6 +118,7 @@ def draft_letter(data, scope, key):
 
 
 def _notices_for_request(data, request_body):
+    """All notices matching the request, in priority order (no cap)."""
     notices = data["notices"]
     context_ref = (request_body.get("context") or {}).get("ref", "")
     if context_ref.startswith("notice:"):
@@ -123,16 +126,13 @@ def _notices_for_request(data, request_body):
         return [notice for notice in notices if notice["key"] == key]
     if context_ref.startswith("administration:"):
         code = context_ref.split(":", 1)[1]
-        matched = [notice for notice in notices if notice["administration"] == code]
-        return matched[:8]
+        return [notice for notice in notices if notice["administration"] == code]
     if context_ref.startswith("station:"):
         station_id = context_ref.split(":", 1)[1]
-        matched = [notice for notice in notices if any(s["id"] == station_id for s in notice.get("stations", []))]
-        return matched[:8]
+        return [notice for notice in notices if any(s["id"] == station_id for s in notice.get("stations", []))]
     if context_ref.startswith("issue:"):
         issue_id = context_ref.split(":", 1)[1]
-        matched = [notice for notice in notices if notice["issueId"] == issue_id]
-        return matched[:8]
+        return [notice for notice in notices if notice["issueId"] == issue_id]
 
     query = request_body["messages"][-1]["content"].lower()
     tokens = set(re.findall(r"[a-z0-9]+", query))
@@ -141,34 +141,42 @@ def _notices_for_request(data, request_body):
             return [notice]
     for notice in notices:
         if notice["administration"].lower() in tokens or notice["administrationName"].lower() in query:
-            matched = [item for item in notices if item["administration"] == notice["administration"]]
-            return matched[:8]
+            return [item for item in notices if item["administration"] == notice["administration"]]
     for notice in notices:
         if any(station["id"] in tokens for station in notice.get("stations", [])):
             station_ids = {station["id"] for station in notice.get("stations", []) if station["id"] in tokens}
             return [
                 item for item in notices
                 if any(station["id"] in station_ids for station in item.get("stations", []))
-            ][:8]
-    if any(word in query for word in ("first", "priority", "overview", "summary", "risk", "notice")):
-        return notices[:8]
-    return notices[:5]
+            ]
+    return list(notices)
 
 
-def _chat_evidence(notice):
+def _chat_evidence(notice, definitions=None):
+    """Case-specific evidence for the model.
+
+    ``worst_case`` holds the values and the caveats that apply to that exact case.
+    Caveats seen only on other cases of the notice are kept in a separate, explicitly
+    labelled list so they cannot be read as applying to the worst case.
+    """
+    definitions = definitions or {}
     return {
-        "notice_rollup": {
+        "notice": {
             "key": notice["key"],
+            "priority_rank": notice.get("priority"),
             "issue": notice["issueId"],
             "kind": notice["kind"],
             "notice_id": notice["noticeId"],
             "administration": notice["administrationName"],
             "name": notice["name"],
-            "affected_stations": notice.get("stationsAffected"),
+            "provision": notice.get("provision"),
             "cases_of_concern": notice.get("casesOfConcern"),
-            "caveats_across_notice_cases": notice.get("caveats", []),
+            "cases_of_concern_means": definitions.get("casesOfConcern"),
+            "stations_affected": notice.get("stationsAffected"),
+            "stations_affected_means": definitions.get("stationsAffected"),
         },
-        "worst_case_in_rollup": {
+        "worst_case": {
+            "case_id": notice.get("worstCaseId"),
             "status": notice["status"],
             "worst_margin_db": notice.get("worstMarginDb"),
             "quantity": notice.get("measure"),
@@ -180,54 +188,209 @@ def _chat_evidence(notice):
             "rule": notice.get("rule"),
             "citation": notice.get("citation"),
             "assumptions": notice.get("assumptions", []),
+            "caveats_for_this_case": notice.get("caveats", []),
         },
+        "caveats_on_other_cases_only": notice.get("otherCaseCaveats", []),
     }
 
 
-def _completion(data, request_body, api_url, api_key, model, notices):
-    messages = [{
-        "role": "system",
-        "content": (
-            "You are a careful spectrum assessment assistant for Traficom. Use only the assessment "
-            "evidence supplied below and the user's conversation. Never calculate or alter values. "
-            "A screening exceedance is a reason for expert review, not proof of harmful interference "
-            "or a regulatory violation. Clearly distinguish calculated facts from assumptions and "
-            "limitations. Evidence contains notice rollups and a separate worst case within each "
-            "rollup. The rollup caveats may belong to other cases in the same notice; do not imply "
-            "they all apply to the reported worst case. Cite the supplied rule and page where "
-            "available. Keep the answer concise, use the UI's supported Markdown, and do not use "
-            "em dashes, vertical bars, or separator hyphens. When referring to notices, include "
-            "their notice or assignment ID."
-        ),
-    }]
+SYSTEM_PROMPT = (
+    "You are a careful spectrum assessment assistant for Traficom. Use only the assessment "
+    "evidence supplied below and the user's conversation. Never calculate or alter values. "
+    "A screening exceedance is a reason for expert review, not proof of harmful interference "
+    "or a regulatory violation. Clearly distinguish calculated facts from assumptions and "
+    "limitations. Each record has a worst_case with its own caveats_for_this_case; only those caveats "
+    "describe the reported values. caveats_on_other_cases_only belong to other cases of the "
+    "same notice: never attach them to the worst case, and if you mention one, say it applies "
+    "to other cases. Present notices in the supplied priority_rank order; do not re-rank. "
+    "When giving counts, say whether they are cases or distinct stations. If you list only some "
+    "of the supplied notices, say how many of how many you list. Cite the supplied rule and page "
+    "where available. When referring to notices, include their notice or assignment ID. The supplied "
+    "records are notices of concern only, not every notice in the data: call them notices of concern, "
+    "and use issue_funnels for totals such as how many notices were published, matched or calculated.\n\n"
+    "Formatting (the UI renders this Markdown subset: paragraphs, #### headings, '- ' and '1. ' lists, "
+    "tables, **bold**, [label](ref) links):\n"
+    "- Start with one or two sentences that answer the question directly.\n"
+    "- When two or more notices are compared or listed, use a table, one row per notice, in priority "
+    "order, with these columns: Notice, Administration, Margin, Value vs limit, Band, Cases (stations), "
+    "Rule. Keep cells short: margin as '42.94 dB over'; value vs limit as '-95.06 vs -138.0 dB(W/m²) in "
+    "1 MHz'; cases as '365 (358)'; rule as the rule_id with its printed page.\n"
+    "- Link every notice as [name notice_id](notice:<key>), using the record's key.\n"
+    "- Put caveats after the table as a short '- ' list, each naming the notices it applies to; state "
+    "caveats shared by all listed notices once.\n"
+    "- For a single notice, use a short list of facts instead of a table.\n"
+    "- Be concise. Do not use em dashes or separator hyphens, and use vertical bars only inside tables."
+)
+
+
+def compact_evidence(records):
+    """Lossless de-duplication of chat evidence to keep the prompt small.
+
+    Per kind of notice (Space, Terrestrial), text repeated in every record of that kind is
+    stated once in ``shared_by_kind``: the assumptions and the caveats common to every worst
+    case. Each rule's text and citation is given once in ``rules`` and records refer to it
+    by ``rule_id``. Each record keeps only its own additional caveats, and its assumptions
+    only if they differ from its kind's shared list.
+    """
+    by_kind = {}
+    for record in records:
+        by_kind.setdefault(record["notice"]["kind"], []).append(record["worst_case"])
+    shared = {}
+    for kind, cases in by_kind.items():
+        first = cases[0]
+        shared[kind] = {
+            "assumptions": first["assumptions"] if all(c["assumptions"] == first["assumptions"] for c in cases) else [],
+            "caveats_for_every_worst_case": [c for c in first["caveats_for_this_case"]
+                                             if all(c in other["caveats_for_this_case"] for other in cases)],
+        }
+    rules, compact = {}, []
+    for record in records:
+        kind_shared = shared[record["notice"]["kind"]]
+        case = dict(record["worst_case"])
+        rule, citation = case.pop("rule") or {}, case.pop("citation") or {}
+        rule_id = rule.get("id") or ""
+        rules.setdefault(rule_id, {"text": rule.get("text"), "citation": citation})
+        case["rule_id"] = rule_id
+        if kind_shared["assumptions"]:
+            case.pop("assumptions")
+        case["caveats_for_this_case"] = [c for c in case["caveats_for_this_case"]
+                                         if c not in kind_shared["caveats_for_every_worst_case"]]
+        compact.append({**record, "worst_case": case})
+    return {"shared_by_kind": shared, "rules": rules, "records": compact}
+
+
+def _model_messages(data, request_body, notices):
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(request_body["messages"][-12:])
+    evidence = compact_evidence([_chat_evidence(n, data.get("countDefinitions")) for n in notices])
     messages.append({
         "role": "system",
-        "content": "Relevant calculated assessment records (authoritative values; do not recompute):\n"
-                   + json.dumps([_chat_evidence(n) for n in notices], ensure_ascii=False),
+        "content": "issue_funnels (notice counts per stage for each issue): "
+                   + json.dumps({i.get("label", i.get("id")): i.get("funnel", []) for i in data.get("issues", [])},
+                                ensure_ascii=False, separators=(",", ":"))
+                   + f"\nThese {len(notices)} record(s) are all notices of concern that match the request, in priority order. "
+                   "shared_by_kind gives, per notice kind, the assumptions and caveats that apply to every "
+                   "record of that kind (a record lists its own assumptions only when they differ); each "
+                   "record's caveats_for_this_case lists only its additional caveats; rules gives the text "
+                   "and citation for each rule_id."
+                   + "\nRelevant calculated assessment records (authoritative values; do not recompute):\n"
+                   + json.dumps(evidence, ensure_ascii=False, separators=(",", ":")),
     })
+    usage = usage_summary(data) if wants_usage_view(request_body) else None
+    if usage:
+        messages.append({
+            "role": "system",
+            "content": "Finnish usage view of the same results (regrouped per Finnish frequency band and per "
+                       "Finnish station; authoritative, do not recompute). Bands are complete; stations are the "
+                       f"{len(usage['stations'])} most affected of {usage['stationsTotal']}, say so when listing them:\n"
+                       + json.dumps(usage, ensure_ascii=False, separators=(",", ":")),
+        })
+    return messages
+
+
+USAGE_WORDS = ("station", "band", "usage", "frequency range", "frequencies", "most affected", "most exposed",
+               "threatened", "allocation")
+USAGE_STATIONS_IN_CONTEXT = 30
+
+
+def wants_usage_view(request_body):
+    """Station, band or Finnish-usage questions also get the usage view."""
+    ref = (request_body.get("context") or {}).get("ref", "")
+    query = request_body["messages"][-1]["content"].lower()
+    return ref.startswith("station:") or any(word in query for word in USAGE_WORDS)
+
+
+def usage_summary(data):
+    usage = data.get("usage") or {}
+    stations = usage.get("stations", [])
+    if not usage.get("bands") and not stations:
+        return None
+    return {
+        "definitions": usage.get("definitions", {}),
+        "bands": usage.get("bands", []),
+        "stations": stations[:USAGE_STATIONS_IN_CONTEXT],
+        "stationsTotal": len(stations),
+    }
+
+
+MODEL_RETRIES = 2
+RETRY_STATUSES = {429, 503}
+MAX_RETRY_WAIT_S = 60
+
+
+def retry_delay_seconds(response):
+    """Seconds to wait before retrying: Retry-After header, else 'after N s' in the body, else 10."""
+    header = (response.headers or {}).get("Retry-After") if response is not None else None
+    match = None
+    if header and str(header).strip().isdigit():
+        seconds = int(str(header).strip())
+    else:
+        match = re.search(r"after (\d+) ?s", response.text if response is not None else "")
+        seconds = int(match.group(1)) if match else 10
+    return max(1, min(seconds, MAX_RETRY_WAIT_S))
+
+
+def _stream_completion(messages, api_url, api_key, model):
+    """Yield ("thinking", text) and ("text", text) pieces as the model streams them.
+
+    Uses the OpenAI-compatible server-sent events format (``stream: true``). Thinking comes
+    from ``reasoning_content`` or ``reasoning`` deltas when the model provides them.
+    """
+    for attempt in range(MODEL_RETRIES + 1):
+        try:
+            response = requests.post(
+                api_url,
+                headers={"Authorization": f"Bearer {api_key}", "x-opencode-session": "traficom-frontend-chat",
+                         "Accept": "text/event-stream"},
+                json={"model": model, "messages": messages, "stream": True},
+                timeout=(15, 180),
+                stream=True,
+            )
+            response.raise_for_status()
+            break
+        except requests.RequestException as error:
+            status = error.response.status_code if isinstance(error, requests.HTTPError) and error.response is not None else None
+            if status in RETRY_STATUSES and attempt < MODEL_RETRIES:
+                wait = retry_delay_seconds(error.response)
+                yield "thinking", f"The model service is busy (HTTP {status}); retrying in {wait} s.\n"
+                time.sleep(wait)
+                continue
+            detail = ""
+            if status is not None:
+                detail = error.response.text.strip().replace(api_key, "[redacted]")[:300]
+                detail = f" HTTP {status}: {detail}"
+            raise RuntimeError(f"Model request failed.{detail}") from error
+    received = False
+    # Server-sent events are UTF-8 (WHATWG spec). Without a charset in Content-Type,
+    # requests would assume ISO-8859-1 and garble characters such as "²" into "Â²".
+    response.encoding = "utf-8"
     try:
-        response = requests.post(
-            api_url,
-            headers={"Authorization": f"Bearer {api_key}", "x-opencode-session": "traficom-frontend-chat"},
-            json={"model": model, "messages": messages},
-            timeout=90,
-        )
-        response.raise_for_status()
-        body = response.json()
+        for raw in response.iter_lines(decode_unicode=True):
+            if not raw or not raw.startswith("data:"):
+                continue
+            payload = raw[len("data:"):].strip()
+            if payload == "[DONE]":
+                break
+            try:
+                chunk = json.loads(payload)
+            except json.JSONDecodeError as error:
+                raise RuntimeError("Model stream contained invalid JSON") from error
+            for choice in chunk.get("choices") or []:
+                delta = choice.get("delta") or {}
+                thinking = delta.get("reasoning_content") or delta.get("reasoning")
+                if isinstance(thinking, str) and thinking:
+                    received = True
+                    yield "thinking", thinking
+                text = delta.get("content")
+                if isinstance(text, str) and text:
+                    received = True
+                    yield "text", text
     except requests.RequestException as error:
-        detail = ""
-        if isinstance(error, requests.HTTPError) and error.response is not None:
-            detail = error.response.text.strip().replace(api_key, "[redacted]")[:300]
-            detail = f" HTTP {error.response.status_code}: {detail}"
-        raise RuntimeError(f"Model request failed.{detail}") from error
-    except requests.JSONDecodeError as error:
-        raise RuntimeError("Model returned invalid JSON") from error
-    try:
-        answer = body["choices"][0]["message"]["content"].strip()
-    except (KeyError, IndexError, TypeError, AttributeError) as error:
-        raise RuntimeError("Model response did not contain a chat answer") from error
-    return answer, notices
+        raise RuntimeError("Model stream was interrupted.") from error
+    finally:
+        response.close()
+    if not received:
+        raise RuntimeError("Model response did not contain a chat answer")
 
 
 def _chat_events(data, request_body):
@@ -239,17 +402,19 @@ def _chat_events(data, request_body):
         return
 
     notices = _notices_for_request(data, request_body)
-    yield {"type": "reasoning", "text": f"Loaded {len(notices)} relevant calculated assessment record(s)."}
-    yield {"type": "reasoning", "text": "Using the recorded values, statuses, assumptions, and citations without recalculating them."}
+    answer = ""
     try:
-        answer, notices = _completion(data, request_body, api_url, api_key, model, notices)
+        for kind, piece in _stream_completion(_model_messages(data, request_body, notices), api_url, api_key, model):
+            if kind == "text":
+                answer += piece
+            yield {"type": kind, "text": piece}
     except RuntimeError as error:
         yield {"type": "error", "message": str(error)}
         return
 
-    chunk_size = 30
-    for offset in range(0, len(answer), chunk_size):
-        yield {"type": "text", "text": answer[offset:offset + chunk_size]}
+    # Sources: the notices the answer actually names (by ID), else the first one supplied.
+    mentioned = [n for n in notices if re.search(rf"(?<!\d){re.escape(n['noticeId'])}(?!\d)", answer)]
+    notices = mentioned or notices[:1]
 
     seen = set()
     for notice in notices:
@@ -320,7 +485,7 @@ def make_handler(assessment_path=ASSESSMENT_PATH):
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             origin = self.headers.get("Origin")
-            if origin in CORS_ORIGINS:
+            if is_allowed_origin(origin):
                 self.send_header("Access-Control-Allow-Origin", origin)
                 self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -399,7 +564,9 @@ def make_handler(assessment_path=ASSESSMENT_PATH):
 
 
 def serve(host="127.0.0.1", port=8000, export=True):
+    # Model settings may live in the project root or in backend/ (root wins if both set a value).
     load_dotenv(PROJECT_ROOT / ".env")
+    load_dotenv(PROJECT_ROOT / "backend" / ".env")
     if export:
         subprocess.run([sys.executable, str(EXPORT_SCRIPT)], cwd=PROJECT_ROOT, check=True)
     server = _Server((host, port), make_handler())

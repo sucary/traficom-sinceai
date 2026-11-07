@@ -1,4 +1,4 @@
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ChatAction, ChatMessage, EntityRef } from "../api/types";
 import {
@@ -12,7 +12,8 @@ import {
   updateMessage,
   useConversations,
 } from "../chatStore";
-import { InlineText, RichText } from "../components/RichText";
+import { GoIcon, SendIcon, StopIcon } from "../components/Icons";
+import { RichText } from "../components/RichText";
 import { refHref, refToRoute } from "../links";
 import { go } from "../router";
 
@@ -45,7 +46,9 @@ async function runAnswer(
       updateMessage(conversationId, assistantId, (m) => {
         switch (e.type) {
           case "reasoning":
-            return { ...m, reasoning: [...(m.reasoning ?? []), { text: e.text }] };
+            return m; // status steps are no longer shown
+          case "thinking":
+            return { ...m, thinking: (m.thinking ?? "") + e.text };
           case "text":
             return { ...m, content: m.content + e.text };
           case "reference":
@@ -113,38 +116,35 @@ function Composer({
 
   return (
     <form className={"composer" + (large ? " large" : "")} onSubmit={submit}>
-      <textarea
-        ref={ref}
-        rows={1}
-        aria-label="Message"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={key}
-      />
-      {busy ? (
-        <button type="button" onClick={onStop}>
-          Stop
-        </button>
-      ) : (
-        <button type="submit" disabled={!text.trim()}>
-          Send
-        </button>
-      )}
+      <div className="composer-field">
+        <textarea
+          ref={ref}
+          rows={1}
+          aria-label="Message"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={key}
+        />
+        {busy ? (
+          <button type="button" className="round-btn" aria-label="Stop" title="Stop" onClick={onStop}>
+            <StopIcon />
+          </button>
+        ) : (
+          <button type="submit" className="round-btn" aria-label="Send" title="Send" disabled={!text.trim()}>
+            <SendIcon />
+          </button>
+        )}
+      </div>
     </form>
   );
 }
 
-function Reasoning({ steps, open }: { steps: { text: string }[]; open: boolean }) {
+// The model's thinking, collapsed by default (also while it streams).
+function Thinking({ text, active }: { text: string; active: boolean }) {
   return (
-    <details className="reasoning" open={open}>
-      <summary>Reasoning</summary>
-      <ol>
-        {steps.map((s, i) => (
-          <li key={i}>
-            <InlineText text={s.text} />
-          </li>
-        ))}
-      </ol>
+    <details className="reasoning">
+      <summary>{active ? "Thinking" : "Thought process"}</summary>
+      <p className="thinking-text">{text}</p>
     </details>
   );
 }
@@ -162,16 +162,16 @@ function AssistantMessage({
   const streaming = m.status === "streaming";
   return (
     <div className="msg ai">
-      {m.reasoning && m.reasoning.length > 0 && <Reasoning steps={m.reasoning} open={streaming} />}
-      {m.content ? <RichText text={m.content} /> : streaming && <p className="thinking">Thinking</p>}
+      {m.thinking && <Thinking text={m.thinking} active={streaming && !m.content} />}
+      {m.content ? <RichText text={m.content} /> : streaming && !m.thinking && <p className="thinking">Thinking</p>}
       {m.status === "error" && (
         <p className="strong">The answer could not be completed. {m.error}</p>
       )}
       {m.status === "stopped" && <p className="strong">Stopped</p>}
 
       {m.references && m.references.length > 0 && (
-        <div className="refs">
-          <h4>Sources</h4>
+        <details className="reasoning refs">
+          <summary>Sources ({m.references.length})</summary>
           <ul>
             {m.references.map((r) => {
               const h = refHref(r.ref);
@@ -189,7 +189,7 @@ function AssistantMessage({
               );
             })}
           </ul>
-        </div>
+        </details>
       )}
 
       {m.actions && m.actions.length > 0 && (
@@ -197,11 +197,13 @@ function AssistantMessage({
           {m.actions.map((a) => (
             <button
               key={a.ref + a.label}
+              className="go-btn"
               onClick={() => {
                 const r = refToRoute(a.ref);
                 if (r) go(r);
               }}
             >
+              <GoIcon />
               {a.label}
             </button>
           ))}
@@ -231,11 +233,12 @@ function AssistantMessage({
   );
 }
 
-export function ChatPage({ conversationId }: { conversationId?: string }) {
+export function ChatPage({ conversationId, header }: { conversationId?: string; header?: ReactNode }) {
   const conversations = useConversations();
   const conv = conversations.find((c) => c.id === conversationId);
   const controllers = useRef(new Map<string, AbortController>()).current;
   const [context, setContext] = useState<EntityRef | undefined>();
+  const [prefill, setPrefill] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const busy = !!conv?.messages.some((m) => m.status === "streaming");
 
@@ -263,14 +266,15 @@ export function ChatPage({ conversationId }: { conversationId?: string }) {
     runAnswer(conv.id, assistantId, context, controllers);
   }
 
-  // A question handed over from a notice page starts a new conversation.
+  // A question handed over from a notice, station or other page opens a new chat with the
+  // question prefilled (not sent), keeping where it came from as context. Sending here on
+  // mount was aborted by React StrictMode's simulated unmount and showed "Stopped".
   useEffect(() => {
     const q = takeQueuedQuestion();
     if (q) {
       setContext(q.ref);
-      send(q.question, q.ref);
+      setPrefill(q.question);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -286,7 +290,7 @@ export function ChatPage({ conversationId }: { conversationId?: string }) {
   return (
     <div className="chat-layout">
       <aside className="chat-side">
-        <button onClick={() => go({ view: "chat" })}>New chat</button>
+        <button className="new-chat" onClick={() => go({ view: "chat" })}>New chat</button>
         <nav aria-label="Conversations">
           {conversations.map((c) => (
             <div key={c.id} className={"conv" + (c.id === conversationId ? " current" : "")}>
@@ -307,13 +311,24 @@ export function ChatPage({ conversationId }: { conversationId?: string }) {
       </aside>
 
       <div className="chat-main">
+        {header}
         {empty ? (
           <div className="chat-empty">
-            <h1>What do you want to assess?</h1>
-            <Composer key={conversationId ?? "new"} onSend={send} onStop={stop} busy={busy} large />
+            <h1>Ask about interference risks</h1>
+            <Composer
+              key={(conversationId ?? "new") + prefill}
+              initial={prefill}
+              onSend={(text) => {
+                setPrefill("");
+                send(text);
+              }}
+              onStop={stop}
+              busy={busy}
+              large
+            />
             <div className="suggestions">
               {SUGGESTIONS.map((s) => (
-                <button key={s} className="plain" onClick={() => send(s)}>
+                <button key={s} className="plain" onClick={() => setPrefill(s)}>
                   {s}
                 </button>
               ))}

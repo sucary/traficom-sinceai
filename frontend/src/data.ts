@@ -45,6 +45,43 @@ export interface Station {
   limit: number | null;
   marginDb: number | null;
   distanceKm?: number;
+  /** Finland's M4 allocation band of this station's protected frequency (space). */
+  finnishBand?: string;
+  /** Finland's fixed/mobile allocation category in that band: primary, secondary or not_listed. */
+  nationalUse?: string;
+}
+
+/** Finnish-usage view: the same cases regrouped per frequency band and per Finnish station. */
+export interface UsageBand {
+  band: string;
+  kind: "Space" | "Terrestrial";
+  nationalUse: string;
+  stations: number;
+  notices: number;
+  cases: number;
+  worstMarginDb: number | null;
+  worstNoticeKey: string;
+  worstNoticeName: string;
+  worstRuleId: string;
+  statusCounts: Record<string, number>;
+}
+
+export interface UsageStation {
+  id: string;
+  latitude: number;
+  longitude: number;
+  bands: string[];
+  notices: number;
+  cases: number;
+  worstMarginDb: number | null;
+  worstNoticeKey: string;
+  worstNoticeName: string;
+}
+
+export interface Usage {
+  definitions: Record<string, string>;
+  bands: UsageBand[];
+  stations: UsageStation[];
 }
 
 export interface SourceRow {
@@ -79,7 +116,11 @@ export interface Notice {
   rule: { id: string; text: string };
   citation: { document: string; provision: string; printedPage: number | null; pdfPage: number | null; url?: string };
   assumptions: string[];
+  /** Caveats that apply to the headline (worst-case) values. */
   caveats: string[];
+  /** Caveats found only on other cases of this notice, with how many cases they apply to. */
+  otherCaseCaveats?: { text: string; cases: number }[];
+  worstCaseId?: string;
   stationsAffected: number;
   casesOfConcern: number;
   stations: Station[];
@@ -103,6 +144,7 @@ export interface Assessment {
   generated: string;
   issues: Issue[];
   notices: Notice[];
+  usage?: Usage;
   trends: Trend[];
 }
 

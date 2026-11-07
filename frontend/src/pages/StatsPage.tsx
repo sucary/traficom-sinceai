@@ -3,6 +3,8 @@ import { Assessment } from "../data";
 import { charts } from "../charts";
 import { count } from "../format";
 import { Ref } from "../components/RichText";
+import { BackIcon } from "../components/Icons";
+import { Dropdown } from "../components/Dropdown";
 
 type Sort = "value" | "label" | "change";
 
@@ -32,16 +34,22 @@ export function StatsPage({ data, id }: { data: Assessment; id: string }) {
   return (
     <div className="page">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>{chart.title}</h1>
         <div className="controls">
-          <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
-            <option value="value">Sort by {chart.valueLabel}</option>
-            <option value="label">Sort by name</option>
-            {pairs && <option value="change">Sort by change</option>}
-          </select>
+          <Dropdown
+            ariaLabel="Sort"
+            value={sort}
+            onChange={(value) => setSort(value as Sort)}
+            options={[
+              { value: "value", label: `Sort by ${chart.valueLabel}` },
+              { value: "label", label: "Sort by name" },
+              ...(pairs ? [{ value: "change", label: "Sort by change" }] : []),
+            ]}
+          />
         </div>
       </div>
 

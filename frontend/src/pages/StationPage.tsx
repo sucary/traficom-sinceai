@@ -4,6 +4,7 @@ import { queueQuestion } from "../chatStore";
 import { Ref } from "../components/RichText";
 import { adminRef, noticeRef, stationRef } from "../links";
 import { go } from "../router";
+import { BackIcon } from "../components/Icons";
 
 export function StationPage({ data, id }: { data: Assessment; id: string }) {
   const notices = noticesForStation(data, id);
@@ -14,20 +15,11 @@ export function StationPage({ data, id }: { data: Assessment; id: string }) {
   return (
     <div className="page">
       <div className="detail-head">
-        <button className="plain" onClick={() => history.back()}>
+        <button className="plain back-btn" onClick={() => history.back()}>
+          <BackIcon />
           Back
         </button>
         <h1>Station {id}</h1>
-        <div className="actions">
-          <button
-            onClick={() => {
-              queueQuestion(`Which notices affect station ${id}?`, stationRef(id));
-              go({ view: "chat" });
-            }}
-          >
-            Ask about this station
-          </button>
-        </div>
       </div>
 
       <section>
@@ -53,6 +45,16 @@ export function StationPage({ data, id }: { data: Assessment; id: string }) {
             </div>
           )}
         </dl>
+        <div className="actions detail-actions">
+          <button
+            onClick={() => {
+              queueQuestion(`Which notices affect station ${id}?`, stationRef(id));
+              go({ view: "chat" });
+            }}
+          >
+            Ask about this station
+          </button>
+        </div>
       </section>
 
       <section>

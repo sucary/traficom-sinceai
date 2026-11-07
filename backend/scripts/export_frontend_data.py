@@ -9,10 +9,16 @@ from the records; the script only groups and orders them.
 
 Margin convention in the export: negative = above the limit (same as the space records).
 Terrestrial margins are therefore sign-flipped.
+
+Evidence is kept case-specific. A notice's headline values come from its worst case,
+and ``caveats`` lists only caveats that apply to that case (plus standard caveats).
+Caveats that appear only on other cases of the same notice are listed separately in
+``otherCaseCaveats`` with the number of cases they apply to.
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 from collections import defaultdict
@@ -67,6 +73,15 @@ ADMINISTRATIONS = {
     "USA": ("USA", "United States"), "UZB": ("UZB", "Uzbekistan"), "VEN": ("VEN", "Venezuela"),
     "VTN": ("VNM", "Viet Nam"),
 }
+
+COUNT_DEFINITIONS = {
+    "casesOfConcern": "Cases of this notice with a status of concern (exceeds, near the limit or unallocated "
+                      "service). One case is one Finnish station and protected band against one notice.",
+    "stationsAffected": "Distinct Finnish stations (or assessment points) among the cases of concern.",
+    "priority": "Rank across all notices, computed in code: status (exceeds, then near, then unallocated "
+                "service), then worst margin (most negative first), then stations affected.",
+}
+RR_4_4_TEXT = "The service is not allocated in Region 1 for this band and operates under RR No. 4.4."
 
 PROVISIONS = {"9.1/IA": "9.1 advance publication", "9.1": "9.1 advance publication", "IA": "9.1 advance publication", "9.6": "9.6 coordination",
               "11.2": "11.2 notification", "RS49": "Resolution 49"}
@@ -139,6 +154,100 @@ def criterion_text(crit: dict | None) -> str:
     return clean(". ".join(parts) + ".")
 
 
+def m4_context(case: dict) -> tuple[str, str]:
+    """Finland's M4 band label and national fixed/mobile use for one case, from its own evaluation.
+
+    The governing evaluation is used; cases without one (e.g. RR No. 4.4) use their first
+    evaluation that carries M4 context. Returns ("", "") when the case has none.
+    """
+    governing = case["result"].get("governing_criterion_id")
+    evaluations = case.get("evaluations", [])
+    ordered = [e for e in evaluations if e.get("criterion_id") == governing] + evaluations
+    for e in ordered:
+        m4 = (e.get("sharing") or {}).get("m4_finland") or {}
+        bands = m4.get("bands") or []
+        if bands:
+            label = re.sub(r"\s+-\s+", " to ", bands[0].get("m4_band", "")).strip()
+            return clean(label), m4.get("partner_in_finland", "")
+    return "", ""
+
+
+def usage_views(notices: list[dict]) -> dict:
+    """Finnish-usage view of the same results: per frequency band and per Finnish station.
+
+    Built only by regrouping the notices' affected-station rows (no new calculation). A band
+    is Finland's M4 band label (space) or the assignment frequency (terrestrial). Border
+    assessment points are not stations and are left out of the station view.
+    """
+    bands: dict[str, dict] = {}
+    stations: dict[str, dict] = {}
+    for n in notices:
+        for s in n.get("stations", []):
+            label = s.get("finnishBand") or s.get("band") or ""
+            b = bands.setdefault(label, {"band": label, "kind": n["kind"], "nationalUse": s.get("nationalUse", ""),
+                                         "stations": set(), "notices": set(), "cases": 0, "worstMarginDb": None,
+                                         "worstNoticeKey": "", "worstNoticeName": "", "worstRuleId": "",
+                                         "statusCounts": {}})
+            b["stations"].add(s["id"])
+            b["notices"].add(n["key"])
+            b["cases"] += 1
+            b["statusCounts"][s["status"]] = b["statusCounts"].get(s["status"], 0) + 1
+            if s.get("marginDb") is not None and (b["worstMarginDb"] is None or s["marginDb"] < b["worstMarginDb"]):
+                b.update(worstMarginDb=s["marginDb"], worstNoticeKey=n["key"], worstNoticeName=n["name"],
+                         worstRuleId=s.get("ruleId") or n.get("rule", {}).get("id", ""))
+            if s["id"] == "Border point":
+                continue
+            st = stations.setdefault(s["id"], {"id": s["id"], "latitude": s["latitude"], "longitude": s["longitude"],
+                                               "bands": set(), "notices": set(), "cases": 0, "worstMarginDb": None,
+                                               "worstNoticeKey": "", "worstNoticeName": ""})
+            st["bands"].add(label)
+            st["notices"].add(n["key"])
+            st["cases"] += 1
+            if s.get("marginDb") is not None and (st["worstMarginDb"] is None or s["marginDb"] < st["worstMarginDb"]):
+                st.update(worstMarginDb=s["marginDb"], worstNoticeKey=n["key"], worstNoticeName=n["name"])
+
+    def order(item):
+        return (item["worstMarginDb"] if item["worstMarginDb"] is not None else 0, -len(item["notices"]))
+
+    band_rows = []
+    for b in sorted(bands.values(), key=order):
+        band_rows.append({**b, "stations": len(b["stations"]), "notices": len(b["notices"])})
+    station_rows = []
+    for st in sorted(stations.values(), key=order):
+        station_rows.append({**st, "bands": sorted(st["bands"]), "notices": len(st["notices"])})
+    return {
+        "definitions": {
+            "band": "Finland's M4 frequency allocation band of the protected station (space) or the assignment "
+                    "frequency (terrestrial).",
+            "nationalUse": "Category of Finland's fixed or mobile allocation in that M4 band (primary, secondary, "
+                           "not_listed).",
+            "cases": "Cases of concern: one notice against one Finnish station and protected band.",
+            "worstMarginDb": "Most negative margin among those cases (negative = above the limit).",
+            "worstRuleId": "Rule (Table 21-4 row or terrestrial criterion) of that worst case.",
+        },
+        "bands": band_rows,
+        "stations": station_rows,
+    }
+
+
+def case_caveats(case: dict) -> list[str]:
+    """Caveats of one case: those of its governing evaluation, plus RR No. 4.4 if that is its status."""
+    result = case["result"]
+    governing = result.get("governing_criterion_id")
+    found = []
+    for e in case.get("evaluations", []):
+        # Without a governing row no evaluation describes the case's values (e.g. RR No. 4.4).
+        if not governing or e.get("criterion_id") != governing:
+            continue
+        for cv in e.get("caveats") or []:
+            t = caveat_text(cv)
+            if t and t not in found:
+                found.append(t)
+    if result["status"] == "unallocated_service_rr_4_4" and RR_4_4_TEXT not in found:
+        found.append(RR_4_4_TEXT)
+    return found
+
+
 def caveat_text(c) -> str:
     if isinstance(c, dict):
         c = c.get("text") or c.get("message") or json.dumps(c)
@@ -157,9 +266,13 @@ def space_issue(folder: Path, criteria: dict) -> tuple[dict, list[dict]]:
     issue_no = re.sub(r"\D", "", folder.name)
     issue_id = folder.name
     by_notice: dict[int, list[dict]] = defaultdict(list)
+    calculated_notices, exceeding_notices = set(), set()
     with (pfd / "case_pfd_results.jsonl").open(encoding="utf8") as fh:
         for line in fh:
             r = json.loads(line)
+            calculated_notices.add(r["notice_id"])
+            if r["result"]["status"] == "exceeds_limit":
+                exceeding_notices.add(r["notice_id"])
             if r["result"]["status"] in SPACE_CONCERN:
                 by_notice[r["notice_id"]].append(r)
 
@@ -173,26 +286,33 @@ def space_issue(folder: Path, criteria: dict) -> tuple[dict, list[dict]]:
         worst = cases[0]
         res, sp = worst["result"], worst["space"]
         cit = res.get("regulation_citation") or {}
-        caveats = list(standard_caveats)
-        for c in cases:
-            for e in c.get("evaluations", []):
-                for cv in e.get("caveats") or []:
-                    t = caveat_text(cv)
-                    if t and t not in caveats:
-                        caveats.append(t)
-            if c["result"]["status"] == "unallocated_service_rr_4_4":
-                t = "The service is not allocated in Region 1 for this band and operates under RR No. 4.4."
-                if t not in caveats:
-                    caveats.append(t)
+        own = case_caveats(worst)
+        caveats = list(standard_caveats) + [t for t in own if t not in standard_caveats]
+        other_counts: dict[str, int] = {}
+        for c in cases[1:]:
+            for t in case_caveats(c):
+                if t not in own:
+                    other_counts[t] = other_counts.get(t, 0) + 1
+        other_case_caveats = [{"text": t, "cases": n} for t, n in other_counts.items()]
+        if worst["result"].get("rr_4_4_unallocated_rows") and worst["result"]["status"] != "unallocated_service_rr_4_4":
+            other_case_caveats.append({
+                "text": "Another Table 21-4 row considered for the worst case has a satellite service that is not "
+                        "allocated in Region 1 (RR No. 4.4); this does not apply to the headline value.",
+                "cases": 1,
+            })
 
         stations = []
         for c in cases[:MAX_STATION_ROWS]:
             fs, cr = c["finnish_station"], c["result"]
+            m4_band, national_use = m4_context(c)
             stations.append({
                 "id": fs["station_number"],
                 "latitude": fs["latitude"],
                 "longitude": fs["longitude"],
                 "band": band(fs.get("protected_band") or {}),
+                "finnishBand": m4_band,
+                "nationalUse": national_use,
+                "ruleId": cr.get("governing_criterion_id") or "",
                 "status": cr["status"],
                 "value": cr.get("pfd_db"),
                 "limit": cr.get("limit_db"),
@@ -249,6 +369,8 @@ def space_issue(folder: Path, criteria: dict) -> tuple[dict, list[dict]]:
                          "url": cit.get("source_url")},
             "assumptions": [clean(a) for a in worst.get("assumptions", [])],
             "caveats": caveats,
+            "otherCaseCaveats": other_case_caveats,
+            "worstCaseId": worst.get("case_id"),
             "stationsAffected": affected,
             "casesOfConcern": len(cases),
             "stations": stations,
@@ -261,9 +383,33 @@ def space_issue(folder: Path, criteria: dict) -> tuple[dict, list[dict]]:
         "kind": "Space",
         "counts": summary["counts"],
         "noticesOfConcern": len(notices),
+        "funnel": space_funnel(folder, len(calculated_notices), len(notices), len(exceeding_notices)),
         "runId": summary["run"]["run_id"][:12],
     }
     return issue, notices
+
+
+def space_funnel(folder: Path, calculated: int, of_concern: int, exceeding: int) -> list[dict]:
+    """Notice counts at each stage of one Space IFIC run (from its own output files)."""
+    stages = []
+    manifest = folder / "prepared" / "manifest.json"
+    if manifest.exists():
+        datasets = json.loads(manifest.read_text(encoding="utf8")).get("datasets", [])
+        evaluated = next((d for d in datasets if Path(d.get("file", "")).name.lower() == f"{folder.name.lower()}.mdb"), None)
+        notices = ((evaluated or {}).get("extraction", {}).get("tables", {}).get("notice", {}) or {}).get("records")
+        if notices is not None:
+            stages.append({"stage": "Notices published in the IFIC", "count": notices})
+    rollups = folder / "frequency-cases" / "notice_rollups.csv"
+    if rollups.exists():
+        with rollups.open(encoding="utf8", newline="") as fh:
+            matched = {row["notice_id"] for row in csv.DictReader(fh) if row.get("space_dataset_kind") == "space_ific_evaluation"}
+        stages.append({"stage": "Overlapping or adjacent to a Finnish protected frequency", "count": len(matched)})
+    stages += [
+        {"stage": "PFD calculated", "count": calculated},
+        {"stage": "Notices of concern (exceeds, near the limit or unallocated service)", "count": of_concern},
+        {"stage": "With at least one case exceeding the limit", "count": exceeding},
+    ]
+    return stages
 
 
 def rows_text(nums: list[int], limit: int = 12) -> str:
@@ -287,8 +433,9 @@ def terrestrial_issue(folder: Path) -> tuple[dict, list[dict], dict | None]:
         "A threshold exceedance is a reason for expert review, not proof of harmful interference.",
         "The border geometry is the generalised GISCO coastline, not the outer limit of Finland's territorial sea, so sea path distances may be too long and field strengths too low.",
     ]
-    if crit.get("challenge_extension"):
-        caveats.append(clean(crit["challenge_extension"]))
+    # The Q&A extension (above-400 MHz value used above the Recommendation's 470 MHz bound)
+    # only concerns assignments above 470 MHz; it must not be attached to lower frequencies.
+    extension = clean(crit["challenge_extension"]) if crit.get("challenge_extension") else ""
 
     notices = []
     for f in findings:
@@ -348,7 +495,9 @@ def terrestrial_issue(folder: Path) -> tuple[dict, list[dict], dict | None]:
             "citation": {"document": clean(crit.get("title", "")), "provision": clean(f"Edition {crit.get('edition', '')}"),
                          "printedPage": None, "pdfPage": None, "url": crit.get("url")},
             "assumptions": [clean(a) for a in summary.get("assumptions", [])],
-            "caveats": caveats,
+            "caveats": caveats + ([extension] if extension and float(f["frequency_mhz"]) > 470 else []),
+            "otherCaseCaveats": [],
+            "worstCaseId": str(f["assignment_id"]),
             "stationsAffected": affected,
             "casesOfConcern": 1,
             "stations": stations,
@@ -362,6 +511,12 @@ def terrestrial_issue(folder: Path) -> tuple[dict, list[dict], dict | None]:
         "kind": "Terrestrial",
         "counts": counts,
         "noticesOfConcern": len(notices),
+        "funnel": [
+            {"stage": "New, modified or withdrawn foreign land-mobile transmitters screened",
+             "count": summary.get("screened_event_count", 0)},
+            {"stage": "Within the P.1546 1000 km range, field strength calculated", "count": summary.get("finding_count", 0)},
+            {"stage": "Notices of concern (exceeds or near the threshold)", "count": len(notices)},
+        ],
         "runId": str(summary.get("run_id", ""))[:12],
     }
     trends = None
@@ -419,8 +574,10 @@ def main() -> None:
 
     data = {
         "generated": safe_date(datetime.now().isoformat()),
+        "countDefinitions": COUNT_DEFINITIONS,
         "issues": issues,
         "notices": notices,
+        "usage": usage_views(notices),
         "trends": trends,
     }
     TARGET.parent.mkdir(parents=True, exist_ok=True)

@@ -39,6 +39,8 @@ export interface ChatMessage {
   /** Markdown subset: paragraphs, "- " lists, **bold**, [label](ref) links. */
   content: string;
   reasoning?: ReasoningStep[];
+  /** The model's own thinking, streamed before or alongside the answer; shown collapsed. */
+  thinking?: string;
   references?: Reference[];
   actions?: ChatAction[];
   status?: "streaming" | "done" | "error" | "stopped";
@@ -58,7 +60,8 @@ export interface Conversation {
  * The UI applies them in order to the assistant message being written.
  */
 export type ChatEvent =
-  | { type: "reasoning"; text: string }
+  | { type: "reasoning"; text: string } // legacy; no longer shown
+  | { type: "thinking"; text: string } // model thinking, appended to thinking
   | { type: "text"; text: string } // appended to content
   | { type: "reference"; ref: EntityRef; label: string }
   | { type: "action"; ref: EntityRef; label: string; auto?: boolean } // auto: open immediately
