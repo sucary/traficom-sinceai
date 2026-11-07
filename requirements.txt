@@ -1,0 +1,23 @@
+# PDF-luku ja tekstin käsittely
+pdfplumber
+pdfminer.six
+Pillow
+
+# Vektorihaku ja kielimallien upotukset (Embeddings)
+faiss-cpu
+sentence-transformers
+numpy
+torch
+transformers
+
+# Tekstin paloittelu
+langchain-text-splitters
+
+# API-kutsut ja ympäristömuuttujat
+requests
+python-dotenv
+
+# Tietokantayhteys Aiveniin (PostgreSQL)
+SQLAlchemy
+psycopg2-binary
+pandas
