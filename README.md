@@ -29,6 +29,23 @@ The challenge requires two files. Each gets its own results folder:
 
 A file name starting with `ific` runs the space calculation. One starting with `brific` runs the terrestrial calculation, which also needs the previous issue in `data` (for 3076, that is `brific3075.mdb`). More detail: `docs/PIPELINE.md`.
 
+## Print AI explanations for flagged results
+
+After both assessment runs have generated their output folders, run this from the
+project root:
+
+```powershell
+.\.venv\Scripts\python.exe backend\scripts\explain_risks.py
+```
+
+The script prints model explanations for the three highest-priority satellite notices
+and terrestrial threshold exceedances, along with the evidence used. Use `--limit 5`
+to show up to five of each. It reads the generated JSONL locally, but sends each
+selected evidence summary to the model API configured by `OPENCODE_API_URL`,
+`OPENCODE_API_KEY`, and `OPENCODE_MODEL` in `.env`. Use `--show-evidence` to also print
+the evidence sent to the model. An explanation is a screening aid, not proof of harmful
+interference or a regulatory violation.
+
 ## AI handoff: which outputs to read
 
 Results are generated locally and are not in git (`output/` is ignored). Records with

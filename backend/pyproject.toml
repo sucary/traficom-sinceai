@@ -12,6 +12,8 @@ dependencies = [
     "openpyxl==3.1.5",
     "Py1546 @ git+https://github.com/eeveetza/Py1546.git@e235629009ab1a12a33fc4a8fb5612f2883ecb5b",
     "psycopg[binary]==3.3.8",
+    "python-dotenv>=1.0,<2",
+    "requests>=2.31,<3",
 ]
 
 [project.scripts]
@@ -23,4 +25,3 @@ namespaces = false
 
 [tool.setuptools.package-data]
 app = ["db/migrations/*.sql", "reference/*.json", "reference/*.geojson"]
-
