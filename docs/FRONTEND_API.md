@@ -10,6 +10,26 @@ The UI in `frontend/` talks to the backend only through the interface in
 
 A backend that serves the endpoints below replaces the stand-in without UI changes.
 
+## Run the backend API locally
+
+From the project root, start the API after the space and terrestrial assessments have
+completed:
+
+```powershell
+.\.venv\Scripts\python.exe backend\scripts\serve_frontend_api.py
+```
+
+By default, startup refreshes `frontend/public/data/assessment.json` from `output/`
+and serves the API at `http://127.0.0.1:8000/api`. The server uses the model settings
+in the root `.env`; the API key remains on the backend. In `frontend/.env.local`, set:
+
+```text
+VITE_API_URL=http://localhost:8000/api
+```
+
+Then start the Vite development server as usual. The frontend selects its existing
+remote API client from `VITE_API_URL`; no frontend source changes are required.
+
 ## Endpoints
 
 | Method and path | Request | Response |

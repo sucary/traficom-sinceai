@@ -29,6 +29,27 @@ The challenge requires two files. Each gets its own results folder:
 
 A file name starting with `ific` runs the space calculation. One starting with `brific` runs the terrestrial calculation, which also needs the previous issue in `data` (for 3076, that is `brific3075.mdb`). More detail: `docs/PIPELINE.md`.
 
+## Run the frontend with the assessment backend
+
+After both assessment runs have generated their output folders:
+
+1. Start the API from the project root:
+
+   ```powershell
+   .\.venv\Scripts\python.exe backend\scripts\serve_frontend_api.py
+   ```
+
+2. Set `VITE_API_URL=http://localhost:8000/api` in `frontend/.env.local`.
+3. In a separate terminal, start Vite from `frontend`:
+
+   ```powershell
+   npm run dev
+   ```
+
+The API refreshes the frontend assessment export at startup, serves assessment,
+notifications, letters, and AI-backed chat, and keeps the model key on the backend.
+See `docs/FRONTEND_API.md` for the HTTP contract.
+
 ## Print AI explanations for flagged results
 
 After both assessment runs have generated their output folders, run this from the
