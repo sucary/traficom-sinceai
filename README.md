@@ -57,7 +57,7 @@ Key fields in a JSONL record:
   and `emission`.
 - Citations: `result.regulation_citation` (document, provision, printed and PDF page,
   file SHA-256), plus Article 5 page locations in `evaluations[].sharing`. The RR PDFs
-  are in `docs/`. Table 21-4 footnote texts are in
+  are in `data/` (same SHA-256 as `docs/reference/itu-rr-2024/`). Table 21-4 footnote texts are in
   `backend/src/app/reference/pfd_criteria.json` (`footnotes`).
 - Provenance: `evidence` (source datasets, hashes, source rows), `run`, `assumptions`.
 
