@@ -1,0 +1,21 @@
+Traficom Regulation M4 (Frequency Allocation Table) - open-data API snapshot
+===========================================================================
+
+API endpoint     : https://opendata.traficom.fi/api/v13/Taajuusjakotaulukko
+Swagger          : https://opendata.traficom.fi/swagger/ui/index#/Taajuusjakotaulukko
+Downloaded on    : 2026-11-07
+Records          : 5 917 (378 frequency bands, one record per sub-band usage)
+SHA-256          : 41ffdd0ed84a40c19fd4bb3771699a63c879b1ad4f2201dcb1cd3c37524871fb  Taajuusjakotaulukko_api_v13_2026-11-07.json
+
+Regulation text  : Radio Frequency Regulation 4 AG/2026M (TRAFICOM/265115/03.04.05.00/2025),
+                   issued 26.3.2026, in force 31.3.2026 (docs/M4_regulation.pdf).
+
+Field used: Services_in_Finland. Per Appendix 1 of the Frequency Allocation Table
+(docs/M4_regulation.pdf): "Frequency band and services in use or intended to be used
+in this frequency band in Finland. The frequency bands and services are based on the
+Radio Regulations (RR) and the ERC Report 25. ... primary services are written with
+upper case letters (e.g. MOBILE) and secondary services with lower case letters
+(e.g. Mobile)."
+
+The API edition is not stated in the payload; it is assumed to match the regulation in
+force on the download date (4 AG/2026M).

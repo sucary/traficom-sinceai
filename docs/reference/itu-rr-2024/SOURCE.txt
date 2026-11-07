@@ -1,0 +1,20 @@
+ITU Radio Regulations, Edition of 2024 (English), official ITU download
+=======================================================================
+
+Publication page : https://www.itu.int/pub/R-REG-RR-2024
+Downloaded from  : https://www.itu.int/dms_pub/itu-r/opb/reg/R-REG-RR-2024-ZPF-E.zip
+Downloaded on    : 2026-11-07
+Archive SHA-256  : ae59067722362d7059d16561abcaa646dca501d642e414faa1f5f6411cb99d8e  R-REG-RR-2024-ZPF-E.zip
+                   (archive not kept; Volumes 3, 4 and Appendix 27 maps were not extracted)
+
+Extracted and renamed (original archive member name in brackets):
+
+a19db60201342f44443143c01c528abe725b93cf133602631edaa2b6c9ba6a8f  RR-2024-Vol1-Articles-E.pdf    [2400594-RR-Vol 1-E-A5.pdf]
+49e283a5c22e57b44b5e0220eee94df4a7d2055418662bf83c125475d98f3abf  RR-2024-Vol2-Appendices-E.pdf  [2400594-RR-Vol 2-E-A5.pdf]
+
+Locations used by backend/src/app/reference/pfd_criteria.json:
+- Article 21, Section V, No. 21.16 and Table 21-4: Vol. 1 printed pages 286-294
+  (PDF pages 296-304). Table rows on printed pages 287-291 (PDF 297-301),
+  footnotes 21.16.1-21.16.19 on printed pages 291-294 (PDF 301-304).
+- Article 5 footnotes 5.453, 5.455, 5.494, 5.496, 5.549 checked for Finland
+  (Finland is not listed in any of them).
