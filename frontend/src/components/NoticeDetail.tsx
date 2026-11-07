@@ -1,10 +1,11 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { Notice, label } from "../data";
 import { coord, limitWord, margin, num, withUnit } from "../format";
 import { go, href } from "../router";
 import { queueQuestion } from "../chatStore";
 import { adminRef, noticeRef, stationRef } from "../links";
 import { InlineText, Ref } from "./RichText";
+import { StationTable } from "./StationTable";
 
 const STATION_PAGE = 20;
 
@@ -34,7 +35,6 @@ function Bars({ notice }: { notice: Notice }) {
 }
 
 export function NoticeDetail({ notice }: { notice: Notice }) {
-  const [shown, setShown] = useState(STATION_PAGE);
   const word = limitWord(notice.kind);
   const space = notice.kind === "Space";
   const facts: [string, ReactNode][] = [
@@ -124,43 +124,7 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
 
       <section>
         <h2>{space ? "Affected Finnish stations" : "Assessment points"}</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>{space ? "Station" : "Point"}</th>
-                <th>Location</th>
-                <th>{space ? "Protected band" : "Frequency"}</th>
-                <th>Status</th>
-                {!space && <th className="num">Distance</th>}
-                <th className="num">{space ? "PFD" : "Field strength"}</th>
-                <th className="num">{space ? "Limit" : "Threshold"}</th>
-                <th className="num">Margin</th>
-              </tr>
-            </thead>
-            <tbody>
-              {notice.stations.slice(0, shown).map((s, i) => (
-                <tr key={s.id + i}>
-                  <td className="strong">{/^\d+$/.test(s.id) ? <Ref to={stationRef(s.id)}>{s.id}</Ref> : s.id}</td>
-                  <td className="nowrap">{coord(s.latitude, s.longitude)}</td>
-                  <td className="nowrap">{s.band}</td>
-                  <td className="nowrap">{label(s.status)}</td>
-                  {!space && <td className="num">{num(s.distanceKm)} km</td>}
-                  <td className="num">{num(s.value)}</td>
-                  <td className="num">{num(s.limit)}</td>
-                  <td className="num">{margin(s.marginDb, word)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {shown < notice.stations.length && (
-          <div className="more">
-            <button onClick={() => setShown(notice.stations.length)}>
-              Show all {notice.stations.length} {notice.kind === "Space" ? "cases" : "points"}
-            </button>
-          </div>
-        )}
+        <StationTable notice={notice} limit={STATION_PAGE} />
       </section>
 
       <section className="grid2">

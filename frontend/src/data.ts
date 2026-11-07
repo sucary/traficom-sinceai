@@ -60,7 +60,8 @@ export interface Notice {
   issueId: string;
   kind: "Space" | "Terrestrial";
   noticeId: string;
-  administration: string;
+  administration: string; // ISO 3166 alpha-3, always 3 letters
+  ituCode?: string; // the ITU administration code (F, G, CHN, ...)
   administrationName: string;
   name: string;
   provision: string;

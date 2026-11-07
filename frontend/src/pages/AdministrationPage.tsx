@@ -54,7 +54,11 @@ export function AdministrationPage({ data, code }: { data: Assessment; code: str
 
       <section>
         <h2>Notices</h2>
-        {notices.length ? <NoticeList notices={notices} /> : <p>No notices of concern from {name}.</p>}
+        {notices.length ? (
+          <NoticeList notices={notices} limit={15} full={{ view: "notices", scope: "administration", key: code }} />
+        ) : (
+          <p>No notices of concern from {name}.</p>
+        )}
       </section>
     </div>
   );

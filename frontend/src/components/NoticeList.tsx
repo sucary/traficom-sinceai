@@ -1,14 +1,13 @@
-import { useState } from "react";
 import { Notice, label } from "../data";
 import { limitWord, margin } from "../format";
-import { go } from "../router";
+import { Route, go } from "../router";
 import { adminRef } from "../links";
 import { Ref } from "./RichText";
 
-const PAGE = 15;
-
-export function NoticeList({ notices }: { notices: Notice[] }) {
-  const [shown, setShown] = useState(PAGE);
+/** Ranked notices. With `limit`, only the first rows show and "Show all" opens
+ *  `full`, the same list in its own view. */
+export function NoticeList({ notices, limit, full }: { notices: Notice[]; limit?: number; full?: Route }) {
+  const shown = limit ?? notices.length;
   return (
     <>
       <div className="table-wrap">
@@ -47,9 +46,9 @@ export function NoticeList({ notices }: { notices: Notice[] }) {
           </tbody>
         </table>
       </div>
-      {shown < notices.length && (
+      {shown < notices.length && full && (
         <div className="more">
-          <button onClick={() => setShown(notices.length)}>Show all {notices.length} notices</button>
+          <button onClick={() => full && go(full)}>Show all {notices.length} notices</button>
         </div>
       )}
     </>

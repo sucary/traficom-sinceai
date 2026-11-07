@@ -40,7 +40,9 @@ remote API client from `VITE_API_URL`; no frontend source changes are required.
 | `POST /chat` | `{ conversationId, messages: [{ role, content }], context?: { ref?, issueId? } }` | NDJSON stream of chat events (below), `Content-Type: application/x-ndjson` |
 
 `key` for a notice is `<issueId>:<noticeId>`, e.g. `ific3074:124545403`; for an
-administration it is the ITU code, e.g. `CHN`. `context.ref` tells the assistant what the
+administration it is the ISO 3166 alpha-3 code, e.g. `CHN` or `FRA`. The UI shows every
+administration with this 3 letter code; the ITU code (`F`, `G`, `D`, ...) stays available
+as `ituCode` on each notice. The export script holds the mapping (`ADMINISTRATIONS`). `context.ref` tells the assistant what the
 user was looking at when they pressed "Ask about this notice", "Ask about this station",
 and so on.
 
@@ -83,6 +85,7 @@ between paragraphs, `- ` list items, `**bold**`, and `[label](ref)` links.
 | `letter:notice:<issueId>:<noticeId>` | Draft letter for one notice |
 | `letter:administration:<code>` | Draft letter for one administration |
 | `chat:<conversationId>` | A saved conversation |
+| `stats:<chartId>` | Full list view of one statistics chart |
 | `https://...` | External document in a new tab |
 
 The UI also links known names it finds in plain text (satellite names, notice numbers,

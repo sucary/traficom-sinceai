@@ -441,7 +441,7 @@ tbody tr.click:hover td {
 
 .hbar {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 150px 1fr;
   gap: 16px;
   align-items: center;
 }
@@ -528,10 +528,6 @@ td.nowrap {
 
 .chart {
   padding-top: 28px;
-}
-
-.hbar.wide {
-  grid-template-columns: 130px 1fr;
 }
 
 /* Navigation */
@@ -827,4 +823,106 @@ a.ref:hover {
 
 .covers {
   margin-top: 32px;
+}
+
+/* Statistics cards: every card is the same size whatever the number of rows. */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
+  gap: 24px;
+}
+
+.chart-card {
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+  background: var(--tint);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.chart-card h3 {
+  margin-bottom: 18px;
+}
+
+.chart-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-body .chart {
+  flex: 1;
+  height: auto;
+}
+
+.chart-foot {
+  padding-top: 16px;
+}
+
+.chart-card button {
+  background: var(--bg);
+}
+
+.chart-card button.plain {
+  background: transparent;
+}
+
+.detail-head .controls {
+  margin-top: 8px;
+}
+
+th.bar-col,
+td.bar-col {
+  width: 34%;
+}
+
+.mini {
+  position: relative;
+  height: 14px;
+}
+
+.mini div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--fill);
+}
+
+.mini div.soft {
+  background: var(--fill-soft);
+  height: 6px;
+  top: -8px;
+}
+
+.hbar > .strong {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 15px;
+}
+
+/* In charts and tables the capsule wraps the label without moving it: the negative
+   margin cancels the padding, so linked and plain labels start at the same x. */
+.hbar > .strong a.ref,
+.col a.ref,
+td a.ref {
+  margin: 0 -5px;
+}
+
+/* Room for the capsule inside the clipped label cell. */
+.hbar > .strong {
+  padding: 0 6px;
+  margin: 0 -6px;
+}
+
+/* The card body clips overflowing rows; widen its clip area so label capsules
+   that reach left of the text are not cut, without moving the content. */
+.chart-body {
+  padding: 0 8px;
+  margin: 0 -8px;
 }

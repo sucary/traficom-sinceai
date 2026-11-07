@@ -10,6 +10,11 @@ import { Trends } from "./components/Trends";
 import { ChatPage } from "./pages/ChatPage";
 import { StationPage } from "./pages/StationPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
+import { StatsPage } from "./pages/StatsPage";
+import { NoticesPage } from "./pages/NoticesPage";
+import { CasesPage } from "./pages/CasesPage";
+
+const LIST_PAGE = 15;
 import { go } from "./router";
 
 function Home({ data, issueId: requested }: { data: Assessment; issueId?: string }) {
@@ -43,7 +48,12 @@ function Home({ data, issueId: requested }: { data: Assessment; issueId?: string
       </section>
       <section>
         <h2>Prioritised notices</h2>
-        <NoticeList key={issueId} notices={notices} />
+        <NoticeList
+          key={issueId}
+          notices={notices}
+          limit={LIST_PAGE}
+          full={{ view: "notices", scope: "issue", key: issueId }}
+        />
       </section>
       <section>
         <h2>Trends across issues</h2>
@@ -96,6 +106,17 @@ export function App() {
       case "administration":
         body = <AdministrationPage data={data} code={route.code} />;
         break;
+      case "stats":
+        body = <StatsPage data={data} id={route.id} />;
+        break;
+      case "notices":
+        body = <NoticesPage data={data} scope={route.scope} keyValue={route.key} />;
+        break;
+      case "cases": {
+        const n = findNotice(data, route.key);
+        body = n ? <CasesPage notice={n} /> : <NotFound what="Notice" />;
+        break;
+      }
       default:
         body = <Home data={data} issueId={route.issueId} />;
     }

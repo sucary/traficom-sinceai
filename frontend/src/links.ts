@@ -22,6 +22,8 @@ export function refToRoute(ref: EntityRef): Route | null {
       return null;
     case "chat":
       return { view: "chat", conversationId: rest[0] };
+    case "stats":
+      return rest[0] ? { view: "stats", id: rest[0] } : null;
     default:
       return null;
   }

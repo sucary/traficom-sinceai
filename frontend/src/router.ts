@@ -6,7 +6,10 @@ export type Route =
   | { view: "letter"; scope: "notice" | "administration"; key: string }
   | { view: "chat"; conversationId?: string }
   | { view: "station"; id: string }
-  | { view: "administration"; code: string };
+  | { view: "administration"; code: string }
+  | { view: "stats"; id: string }
+  | { view: "notices"; scope: "issue" | "administration"; key: string }
+  | { view: "cases"; key: string };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -28,6 +31,16 @@ function parse(hash: string): Route {
     case "administration":
       if (parts[1]) return { view: "administration", code: parts[1] };
       break;
+    case "stats":
+      if (parts[1]) return { view: "stats", id: parts[1] };
+      break;
+    case "notices":
+      if ((parts[1] === "issue" || parts[1] === "administration") && parts[2])
+        return { view: "notices", scope: parts[1], key: parts[2] };
+      break;
+    case "cases":
+      if (parts[1]) return { view: "cases", key: parts[1] };
+      break;
   }
   return { view: "home" };
 }
@@ -48,6 +61,12 @@ export function href(route: Route): string {
       return `#/station/${enc(route.id)}`;
     case "administration":
       return `#/administration/${enc(route.code)}`;
+    case "stats":
+      return `#/stats/${enc(route.id)}`;
+    case "notices":
+      return `#/notices/${route.scope}/${enc(route.key)}`;
+    case "cases":
+      return `#/cases/${enc(route.key)}`;
   }
 }
 

@@ -30,16 +30,42 @@ PRIORITY = {"exceeds_limit": 0, "exceeds_threshold": 0, "near_limit": 1, "near_t
             "unallocated_service_rr_4_4": 2}
 MAX_STATION_ROWS = 100_000  # effectively all cases
 
+# ITU administration code -> (ISO 3166 alpha-3 code, name). The UI shows the ISO code so
+# every administration has a 3 letter code (ITU uses F, G, D, J and so on).
 ADMINISTRATIONS = {
-    "ARS": "Saudi Arabia", "AUS": "Australia", "AUT": "Austria", "BEL": "Belgium", "BHR": "Bahrain",
-    "BLR": "Belarus", "CAN": "Canada", "CHN": "China", "CYP": "Cyprus", "D": "Germany", "DNK": "Denmark",
-    "E": "Spain", "EGY": "Egypt", "EST": "Estonia", "F": "France", "FIN": "Finland", "G": "United Kingdom",
-    "GRC": "Greece", "HOL": "Netherlands", "I": "Italy", "IND": "India", "INS": "Indonesia", "IRN": "Iran",
-    "ISR": "Israel", "J": "Japan", "KAZ": "Kazakhstan", "KOR": "Korea", "LTU": "Lithuania", "LUX": "Luxembourg",
-    "LVA": "Latvia", "MLA": "Malaysia", "NOR": "Norway", "PAK": "Pakistan", "PNG": "Papua New Guinea", "PHL": "Philippines", "ARG": "Argentina", "BRA": "Brazil", "MEX": "Mexico", "NZL": "New Zealand", "MNG": "Mongolia", "AZE": "Azerbaijan", "ARM": "Armenia", "GEO": "Georgia", "BUL": "Bulgaria", "ROU": "Romania", "HNG": "Hungary", "CZE": "Czech Republic", "SVK": "Slovakia", "POR": "Portugal", "IRL": "Ireland", "NIG": "Nigeria", "AFS": "South Africa", "KEN": "Kenya", "ALG": "Algeria", "MRC": "Morocco", "TUN": "Tunisia", "OMA": "Oman", "KWT": "Kuwait", "JOR": "Jordan", "LBN": "Lebanon", "BGD": "Bangladesh", "LAO": "Laos", "CBG": "Cambodia", "PRK": "North Korea", "TKM": "Turkmenistan", "KGZ": "Kyrgyzstan", "TJK": "Tajikistan", "MDA": "Moldova", "SRB": "Serbia", "HRV": "Croatia", "BIH": "Bosnia and Herzegovina", "MKD": "North Macedonia", "ALB": "Albania", "MLT": "Malta", "ISL": "Iceland", "PRG": "Paraguay", "URG": "Uruguay", "CHL": "Chile", "CLM": "Colombia", "PRU": "Peru", "VEN": "Venezuela", "B": "Brazil", "BOL": "Bolivia", "EQA": "Ecuador",
-    "POL": "Poland", "QAT": "Qatar", "RUS": "Russian Federation", "S": "Sweden", "SNG": "Singapore",
-    "SUI": "Switzerland", "SVN": "Slovenia", "THA": "Thailand", "TUR": "Türkiye", "UAE": "United Arab Emirates",
-    "UKR": "Ukraine", "USA": "United States", "UZB": "Uzbekistan", "VTN": "Viet Nam",
+    "AFS": ("ZAF", "South Africa"), "ALB": ("ALB", "Albania"), "ALG": ("DZA", "Algeria"),
+    "ARG": ("ARG", "Argentina"), "ARM": ("ARM", "Armenia"), "ARS": ("SAU", "Saudi Arabia"),
+    "AUS": ("AUS", "Australia"), "AUT": ("AUT", "Austria"), "AZE": ("AZE", "Azerbaijan"),
+    "B": ("BRA", "Brazil"), "BEL": ("BEL", "Belgium"), "BGD": ("BGD", "Bangladesh"),
+    "BHR": ("BHR", "Bahrain"), "BIH": ("BIH", "Bosnia and Herzegovina"), "BLR": ("BLR", "Belarus"),
+    "BOL": ("BOL", "Bolivia"), "BUL": ("BGR", "Bulgaria"), "CAN": ("CAN", "Canada"),
+    "CBG": ("KHM", "Cambodia"), "CHL": ("CHL", "Chile"), "CHN": ("CHN", "China"),
+    "CLM": ("COL", "Colombia"), "CYP": ("CYP", "Cyprus"), "CZE": ("CZE", "Czech Republic"),
+    "D": ("DEU", "Germany"), "DNK": ("DNK", "Denmark"), "E": ("ESP", "Spain"),
+    "EGY": ("EGY", "Egypt"), "EQA": ("ECU", "Ecuador"), "EST": ("EST", "Estonia"),
+    "F": ("FRA", "France"), "FIN": ("FIN", "Finland"), "G": ("GBR", "United Kingdom"),
+    "GEO": ("GEO", "Georgia"), "GRC": ("GRC", "Greece"), "HNG": ("HUN", "Hungary"),
+    "HOL": ("NLD", "Netherlands"), "HRV": ("HRV", "Croatia"), "I": ("ITA", "Italy"),
+    "IND": ("IND", "India"), "INS": ("IDN", "Indonesia"), "IRL": ("IRL", "Ireland"),
+    "IRN": ("IRN", "Iran"), "ISL": ("ISL", "Iceland"), "ISR": ("ISR", "Israel"),
+    "J": ("JPN", "Japan"), "JOR": ("JOR", "Jordan"), "KAZ": ("KAZ", "Kazakhstan"),
+    "KEN": ("KEN", "Kenya"), "KGZ": ("KGZ", "Kyrgyzstan"), "KOR": ("KOR", "Korea"),
+    "KWT": ("KWT", "Kuwait"), "LAO": ("LAO", "Laos"), "LBN": ("LBN", "Lebanon"),
+    "LTU": ("LTU", "Lithuania"), "LUX": ("LUX", "Luxembourg"), "LVA": ("LVA", "Latvia"),
+    "MDA": ("MDA", "Moldova"), "MEX": ("MEX", "Mexico"), "MKD": ("MKD", "North Macedonia"),
+    "MLA": ("MYS", "Malaysia"), "MLT": ("MLT", "Malta"), "MNG": ("MNG", "Mongolia"),
+    "MRC": ("MAR", "Morocco"), "NIG": ("NGA", "Nigeria"), "NOR": ("NOR", "Norway"),
+    "NZL": ("NZL", "New Zealand"), "OMA": ("OMN", "Oman"), "PAK": ("PAK", "Pakistan"),
+    "PHL": ("PHL", "Philippines"), "PNG": ("PNG", "Papua New Guinea"), "POL": ("POL", "Poland"),
+    "POR": ("PRT", "Portugal"), "PRG": ("PRY", "Paraguay"), "PRK": ("PRK", "North Korea"),
+    "PRU": ("PER", "Peru"), "QAT": ("QAT", "Qatar"), "ROU": ("ROU", "Romania"),
+    "RUS": ("RUS", "Russian Federation"), "S": ("SWE", "Sweden"), "SNG": ("SGP", "Singapore"),
+    "SRB": ("SRB", "Serbia"), "SUI": ("CHE", "Switzerland"), "SVK": ("SVK", "Slovakia"),
+    "SVN": ("SVN", "Slovenia"), "THA": ("THA", "Thailand"), "TJK": ("TJK", "Tajikistan"),
+    "TKM": ("TKM", "Turkmenistan"), "TUN": ("TUN", "Tunisia"), "TUR": ("TUR", "Türkiye"),
+    "UAE": ("ARE", "United Arab Emirates"), "UKR": ("UKR", "Ukraine"), "URG": ("URY", "Uruguay"),
+    "USA": ("USA", "United States"), "UZB": ("UZB", "Uzbekistan"), "VEN": ("VEN", "Venezuela"),
+    "VTN": ("VNM", "Viet Nam"),
 }
 
 PROVISIONS = {"9.1/IA": "9.1 advance publication", "9.1": "9.1 advance publication", "IA": "9.1 advance publication", "9.6": "9.6 coordination",
@@ -81,8 +107,19 @@ def band(pb: dict) -> str:
     return f"{hz(lo)} to {hz(hi)}"
 
 
+UNKNOWN_CODES: set[str] = set()
+
+
 def admin(code: str) -> str:
-    return ADMINISTRATIONS.get(code, code)
+    return ADMINISTRATIONS.get(code, (code, code))[1]
+
+
+def iso(code: str) -> str:
+    """3 letter code shown in the UI; unknown codes are reported when the export finishes."""
+    if code in ADMINISTRATIONS:
+        return ADMINISTRATIONS[code][0]
+    UNKNOWN_CODES.add(code)
+    return code
 
 
 def criterion_text(crit: dict | None) -> str:
@@ -190,7 +227,8 @@ def space_issue(folder: Path, criteria: dict) -> tuple[dict, list[dict]]:
             "issueId": issue_id,
             "kind": "Space",
             "noticeId": str(notice_id),
-            "administration": sp["administration"],
+            "administration": iso(sp["administration"]),
+            "ituCode": sp["administration"],
             "administrationName": admin(sp["administration"]),
             "name": clean(", ".join(worst.get("satellite_names") or [f"Notice {notice_id}"])),
             "provision": PROVISIONS.get(sp.get("provision"), sp.get("provision") or ""),
@@ -285,7 +323,8 @@ def terrestrial_issue(folder: Path) -> tuple[dict, list[dict], dict | None]:
             "issueId": issue_id,
             "kind": "Terrestrial",
             "noticeId": str(f["assignment_id"]),
-            "administration": f["administration"],
+            "administration": iso(f["administration"]),
+            "ituCode": f["administration"],
             "administrationName": admin(f["administration"]),
             "name": f"{sn.get('stn_cls') or 'Station'} {f['frequency_mhz']:g} MHz",
             "provision": f"{(f.get('event') or '').capitalize()} assignment",
@@ -333,7 +372,7 @@ def terrestrial_issue(folder: Path) -> tuple[dict, list[dict], dict | None]:
             "previous": f"BR IFIC {summary.get('previous_issue', '')}",
             "current": f"BR IFIC {issue_no}",
             "administrations": [
-                {"label": a["administration"], "previous": a["previous"], "current": a["current"]}
+                {"label": iso(a["administration"]), "previous": a["previous"], "current": a["current"]}
                 for a in t.get("administration_activity", [])
             ],
             "bands": [
@@ -387,6 +426,8 @@ def main() -> None:
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     TARGET.write_text(json.dumps(rounded(data), ensure_ascii=False), encoding="utf8")
     print(f"Wrote {TARGET.relative_to(ROOT)}: {len(issues)} issues, {len(notices)} notices of concern")
+    if UNKNOWN_CODES:
+        print("Add these ITU administration codes to ADMINISTRATIONS:", ", ".join(sorted(UNKNOWN_CODES)))
 
 
 if __name__ == "__main__":
