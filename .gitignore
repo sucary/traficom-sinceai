@@ -9,4 +9,5 @@ output-prepare.log
 *.egg-info/
 build/
 dist/
-
+*.mdb
+tmp/

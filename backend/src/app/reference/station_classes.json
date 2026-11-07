@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "title": "ITU space-station class codes (srv_cls.stn_cls) mapped to Table 21-4 service names",
+  "source": {
+    "document": "ITU BR IFIC (Space Services) Preface, Section IV, Table 3: Class of Station",
+    "edition": "October 2026",
+    "url": "https://www.itu.int/en/ITU-R/space/Preface/preface_e.pdf",
+    "pages": "175-176 of 387"
+  },
+  "service_tokens": {
+    "FSS": "Fixed-satellite",
+    "BSS": "Broadcasting-satellite",
+    "MSS": "Mobile-satellite",
+    "MSS_EXCEPT_AERO": "Mobile-satellite (except aeronautical mobile-satellite)",
+    "RDSS": "Radiodetermination-satellite",
+    "METSAT": "Meteorological-satellite",
+    "EESS": "Earth exploration-satellite",
+    "EESS_ACTIVE": "Earth exploration-satellite (active)",
+    "SR": "Space research",
+    "SO": "Space operation",
+    "ISS": "Inter-satellite"
+  },
+  "notes": [
+    "Telemetry, tracking and telecommand classes (ED, EK, ER) are mapped to space operation, but RR No. 1.23 says these functions 'will normally be provided within the service in which the space station is operating'. Against a row that does not list space operation they are therefore ambiguous, not a mismatch.",
+    "EW (generic EESS) cannot be told apart from active sensors, so it is ambiguous for rows limited to EESS (active).",
+    "Classes with no Table 21-4 service (amateur, radionavigation, standard frequency, time signal) never match a row."
+  ],
+  "classes": {
+    "E1": {"label": "Space research (active sensor) space station", "tokens": ["SR"]},
+    "E2": {"label": "Space research (passive sensor) space station", "tokens": ["SR"]},
+    "E3": {"label": "Space station in the Earth exploration-satellite service (active sensor)", "tokens": ["EESS", "EESS_ACTIVE"]},
+    "E4": {"label": "Space station in the Earth exploration-satellite (passive sensor)", "tokens": ["EESS"]},
+    "E5": {"label": "Space station in the aeronautical mobile-satellite (R) service", "tokens": ["MSS"]},
+    "E6": {"label": "Space station in the aeronautical mobile-satellite (OR) service", "tokens": ["MSS"]},
+    "EA": {"label": "Space station in the amateur-satellite service", "tokens": []},
+    "EB": {"label": "Space station in the broadcasting-satellite service (sound broadcasting)", "tokens": ["BSS"]},
+    "EC": {"label": "Space station in the fixed-satellite service", "tokens": ["FSS"]},
+    "ED": {"label": "Space telecommand space station", "tokens": ["SO"], "ambiguous_for_all_other_services": true},
+    "EE": {"label": "Space station in the standard frequency-satellite service", "tokens": []},
+    "EF": {"label": "Space station in the radiodetermination-satellite service", "tokens": ["RDSS"]},
+    "EG": {"label": "Space station in the maritime mobile-satellite service", "tokens": ["MSS", "MSS_EXCEPT_AERO"]},
+    "EH": {"label": "Space research space station", "tokens": ["SR"]},
+    "EI": {"label": "Space station in the mobile-satellite service", "tokens": ["MSS", "MSS_EXCEPT_AERO"]},
+    "EJ": {"label": "Space station in the aeronautical mobile-satellite service", "tokens": ["MSS"]},
+    "EK": {"label": "Space tracking space station", "tokens": ["SO"], "ambiguous_for_all_other_services": true},
+    "EM": {"label": "Space station in the meteorological-satellite service", "tokens": ["METSAT"]},
+    "EN": {"label": "Space station in the radionavigation-satellite service", "tokens": []},
+    "EO": {"label": "Space station in the aeronautical radionavigation-satellite service", "tokens": []},
+    "EQ": {"label": "Space station in the maritime radionavigation-satellite service", "tokens": []},
+    "ER": {"label": "Space telemetering space station", "tokens": ["SO"], "ambiguous_for_all_other_services": true},
+    "ES": {"label": "Station in the inter-satellite service", "tokens": ["ISS"]},
+    "ET": {"label": "Space station in the space operation service", "tokens": ["SO"]},
+    "EU": {"label": "Space station in the land mobile-satellite service", "tokens": ["MSS", "MSS_EXCEPT_AERO"]},
+    "EV": {"label": "Space station in the broadcasting-satellite service (television)", "tokens": ["BSS"]},
+    "EW": {"label": "Space station in the earth exploration-satellite service", "tokens": ["EESS"], "ambiguous_for": ["EESS_ACTIVE"]},
+    "EY": {"label": "Space station in the time signal-satellite service", "tokens": []}
+  }
+}

@@ -1,0 +1,2346 @@
+{
+  "schema_version": 1,
+  "title": "Space-station pfd criteria for protecting Finnish terrestrial use",
+  "variable": "d = angle of arrival δ above the horizontal plane, in degrees; formulas give dB(W/m2) in the reference bandwidth",
+  "formula_grammar": "numbers, d, X, Y, + - * / ( ), log10(); see app.reference.pfd_criteria",
+  "jurisdiction": {
+    "country": "Finland",
+    "itu_region": 1
+  },
+  "sources": {
+    "RR2024-V1": {
+      "document": "ITU Radio Regulations, Edition of 2024, Volume 1 (Articles)",
+      "edition": "2024",
+      "file": "docs/reference/itu-rr-2024/RR-2024-Vol1-Articles-E.pdf",
+      "sha256": "a19db60201342f44443143c01c528abe725b93cf133602631edaa2b6c9ba6a8f",
+      "url": "https://www.itu.int/dms_pub/itu-r/opb/reg/R-REG-RR-2024-ZPF-E.zip"
+    }
+  },
+  "transcription": {
+    "method": "Read from rendered PDF pages 297-301 and cross-checked with pdftotext -layout extraction.",
+    "transcribed_by": "Claude (AI-assisted), 2026-11-07",
+    "verified_by": null,
+    "status": "unverified_ai_transcription"
+  },
+  "scope": {
+    "included": "All rows of RR Table 21-4 (Rev.WRC-23).",
+    "excluded": [
+      "No. 21.16.2 extra -95 dB(W/m2)/200 MHz limit in 18.6-18.8 GHz (protects passive sensors, not terrestrial use).",
+      "No. 21.16.10 launch-phase limits for deep-space facilities (operational phase, not notice data).",
+      "RR Appendix 5 coordination thresholds, Article 5 footnote pfd limits, AP30/30A/30B annex limits and CEPT material (later criterion kinds)."
+    ]
+  },
+  "footnotes": {
+    "21.16": "The power flux-density at the Earth's surface produced by emissions from a space station, including emissions from a reflecting satellite, for all conditions and for all methods of modulation, shall not exceed the limit given in Table 21-4. The limit relates to the power flux-density which would be obtained under assumed free-space propagation conditions and applies to emissions by a space station of the service indicated where the frequency bands are shared with equal rights with the fixed or mobile service, unless otherwise stated.",
+    "21.16.1": "The equality of right to operate when a frequency band is allocated in different Regions to different services of the same category is established in No. 4.8. Therefore, any limits concerning inter-Regional interference which may appear in ITU-R Recommendations should, as far as practicable, be observed by administrations.",
+    "21.16.2": "In addition to the limits given in Table 21-4, in the band 18.6-18.8 GHz ... the power flux-density across the 200 MHz band 18.6-18.8 GHz produced at the surface of the Earth by emissions from a space station under assumed free-space propagation conditions shall not exceed -95 dB(W/m2), except for less than 5% of time, when the limit may be exceeded by up to 3 dB. The provisions of No. 21.17 do not apply in this band. (WRC-2000)",
+    "21.16.3": "These power flux-density values are derived on the basis of protecting the fixed service using line-of-sight techniques. Where a fixed service using tropospheric scatter operates in the bands listed in the first column and there is insufficient frequency separation, there must be sufficient angular separation ... in order to ensure that the interference power at the receiver input of the fixed-service station does not exceed -168 dBW in any 4 kHz band.",
+    "21.16.3A": "Resolution 903 (Rev.WRC-19) shall apply. (WRC-19)",
+    "21.16.4": "The values given in this table entry shall apply to emissions of space stations of non-geostationary satellites in systems operating with 99 or fewer satellites. Further study concerning the applicability of these values is necessary in order to apply them to systems operating with 100 or more satellites. (WRC-2000)",
+    "21.16.5": "These values are applicable where this band is shared with equal rights with meteorological aids service.",
+    "21.16.6": "The function X is defined as a function of the number, N, of satellites in the non-geostationary satellite constellation in the fixed-satellite service and Nv: X = 0 dB for N <= 50; X = (5/119)(N - 50) dB for 50 < N <= 288; X = (1/69)(N + 402) dB for 288 < N <= 999; X = max{20.3; 10 log10(Nv)} dB for 1 000 <= N <= 6 000; X = 10 log10(Nv) + 1 dB for N > 6 000. Nv is the maximum number of visible space stations (minimum elevation 0 degrees) from any location within the service area of the non-GSO system. In 18.8-19.3 GHz these limits apply to non-GSO FSS space stations whose complete coordination or notification information was received since 17 November 1995 and which were not operational by that date, and to the inter-satellite service. (WRC-23)",
+    "21.16.6A": "These limits apply to emissions of a space station in the meteorological-satellite service and of a geostationary satellite in the fixed-satellite and inter-satellite services. They also apply to emissions of any space station in a non-geostationary-satellite system in the fixed-satellite service in the band 18.8-19.3 GHz for which complete coordination or notification information has been received by the Radiocommunication Bureau by 17 November 1995, or which was in operation by that date. (WRC-23)",
+    "21.16.6B": "These limits also apply to fixed-satellite service space stations using highly-inclined orbits having an apogee altitude greater than 18 000 km and an orbital inclination between 35° and 145° in the band 17.7-19.7 GHz to which Resolution 147 (WRC-07) applies. (WRC-07)",
+    "21.16.6C": "These limits apply to all space stations that use highly-inclined orbits having an apogee altitude greater than 18 000 km and an orbital inclination between 35° and 145° in the band 17.7-19.7 GHz in the fixed-satellite service and that are not covered by Resolution 147 (WRC-07), and for which complete coordination or notification information, as appropriate, was received by the Radiocommunication Bureau after 16 November 2007, and in the inter-satellite service. (WRC-23)",
+    "21.16.7": "These power flux-density limits are subject to review by ITU-R and shall apply until they are revised by a competent world radiocommunication conference.",
+    "21.16.8": "The pfd values given for EESS (active) are mean pfd values: pfd = P + 10 log(τ) + 10 log(PRF) - 30 - 10 log(Bc) + Gt(θ) - 10 log(4π d(θ)^2), with P the SAR RF peak power (dBW), τ pulse length (s), PRF pulse repetition frequency (kHz), Bc SAR emission bandwidth (MHz), Gt(θ) transmit gain in the vertical plane, d(θ) distance to ground (m). (WRC-15)",
+    "21.16.9": "These values are also based on sharing with the Earth exploration-satellite (active) and space research services. (WRC-15)",
+    "21.16.10": "During the launch and near-Earth operational phase of deep-space facilities, non-geostationary satellite systems in the space research service shall not exceed -115 dB(W/m2) for δ <= 5°, -115 + 0.5(δ - 5) for 5° < δ <= 25°, -105 for δ > 25°, in any 1 MHz band. (WRC-2000)",
+    "21.16.14": "When addressing the sharing conditions between the fixed service and the fixed-satellite service in the bands 37.5-40 GHz and 40.5-42.5 GHz, the power flux-density at the Earth's surface from any FSS satellite should be no greater than the level(s) required to meet the FSS link availability and performance objectives ... In any case, the levels shall not exceed the applicable power flux-density limits in Table 21-4. (WRC-03)",
+    "21.16.15": "Y = 0 for max(NN, NS) <= 2; Y = 5 log(max(NN, NS)) for max(NN, NS) > 2, where NN (NS) is the maximum number of space stations in a system simultaneously transmitting on a co-frequency basis in the fixed-satellite service in the Northern (Southern) Hemisphere. Two space stations simultaneously transmitting during short-duration handover count as one satellite. (WRC-03)",
+    "21.16.16": "The applicability of these limits may need to be reviewed by a future competent conference if the number of co-frequency non-geostationary systems brought into use and simultaneously operating in the same hemisphere is greater than five. (WRC-03)",
+    "21.16.17": "These limits apply to non-geostationary fixed-satellite service space stations employing an orbit with an inclination angle between 35° and 145° and apogee altitude greater than 18 000 km. (WRC-03)",
+    "21.16.18": "These limits apply to non-geostationary fixed-satellite service space stations that are not covered by No. 21.16.17. (WRC-03)",
+    "21.16.19": "The methodology included in Annex 2 to Resolution 679 (WRC-23) shall be applied to calculate the pfd produced at the surface of the Earth by emissions from a non-geostationary-satellite space station transmitting in the frequency band 27.5-30.0 GHz. (WRC-23)",
+    "21.17": "The limits given in Table 21-4 may be exceeded on the territory of any country whose administration has so agreed."
+  },
+  "conditions": {
+    "heo": "Non-GSO FSS with inclination 35°-145° and apogee altitude > 18 000 km (No. 21.16.17 / 21.16.6C).",
+    "non_heo": "Non-GSO FSS not covered by No. 21.16.17 (No. 21.16.18).",
+    "ngso_99_or_fewer_satellites": "Systems operating with 99 or fewer satellites (No. 21.16.4).",
+    "gso_or_metsat_or_iss_or_pre1995_ngso_18.8_19.3": "GSO FSS/ISS, MetSat, or pre-17 Nov 1995 non-GSO FSS in 18.8-19.3 GHz (No. 21.16.6A), or HEO under Res. 147 (No. 21.16.6B)."
+  },
+  "parameters": {
+    "X": {
+      "defined_in": "21.16.6",
+      "depends_on": [
+        "N (satellites in constellation)",
+        "Nv (max visible satellites)"
+      ]
+    },
+    "Y": {
+      "defined_in": "21.16.15",
+      "depends_on": [
+        "NN",
+        "NS (max co-frequency transmitting satellites per hemisphere)"
+      ]
+    }
+  },
+  "criteria": [
+    {
+      "criterion_id": "T21-4-1670-1700-EESS-METSAT",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 1670000000,
+          "frequency_max_hz": 1700000000,
+          "label": "1 670-1 700 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Earth exploration-satellite",
+        "Meteorological-satellite"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1500000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 90,
+          "formula": "-133",
+          "source_text": "-133"
+        }
+      ],
+      "footnotes": [],
+      "notes": [
+        "Value based on sharing with meteorological aids service (as printed in the cell)."
+      ],
+      "source": "RR2024-V1",
+      "sharing_basis": [
+        {
+          "frequency_min_hz": 1670000000,
+          "frequency_max_hz": 1700000000,
+          "partners": [
+            "METAIDS"
+          ],
+          "basis": "Table 21-4 cell: value based on sharing with meteorological aids service"
+        }
+      ]
+    },
+    {
+      "criterion_id": "T21-4-1518-1525-MSS-USA-71W-125W",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 1518000000,
+          "frequency_max_hz": 1525000000,
+          "label": "1 518-1 525 MHz (territory of the United States in Region 2 between 71° W and 125° W)",
+          "applies_in_finland": false,
+          "finland_note": "Applies only to US territory in Region 2"
+        }
+      ],
+      "services": [
+        "Mobile-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 4,
+          "formula": "-181.0",
+          "source_text": "-181.0"
+        },
+        {
+          "elev_min_deg": 4,
+          "elev_max_deg": 20,
+          "formula": "-193.0 + 20*log10(d)",
+          "source_text": "-193.0 + 20 log δ"
+        },
+        {
+          "elev_min_deg": 20,
+          "elev_max_deg": 60,
+          "formula": "-213.3 + 35.6*log10(d)",
+          "source_text": "-213.3 + 35.6 log δ"
+        },
+        {
+          "elev_min_deg": 60,
+          "elev_max_deg": 90,
+          "formula": "-150.0",
+          "source_text": "-150.0"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-1518-1525-MSS-USA-OTHER",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 1518000000,
+          "frequency_max_hz": 1525000000,
+          "label": "1 518-1 525 MHz (all other territory of the United States in Region 2)",
+          "applies_in_finland": false,
+          "finland_note": "Applies only to US territory in Region 2"
+        }
+      ],
+      "services": [
+        "Mobile-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 43.4,
+          "formula": "-155.0",
+          "source_text": "-155.0"
+        },
+        {
+          "elev_min_deg": 43.4,
+          "elev_max_deg": 60,
+          "formula": "-213.3 + 35.6*log10(d)",
+          "source_text": "-213.3 + 35.6 log δ"
+        },
+        {
+          "elev_min_deg": 60,
+          "elev_max_deg": 90,
+          "formula": "-150.0",
+          "source_text": "-150.0"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-1525-2300-METSAT-SR-SO-EESS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 1525000000,
+          "frequency_max_hz": 1530000000,
+          "label": "1 525-1 530 MHz (Region 1, Region 3) [fn 7]",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 1670000000,
+          "frequency_max_hz": 1690000000,
+          "label": "1 670-1 690 MHz [fn 12]",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 1690000000,
+          "frequency_max_hz": 1700000000,
+          "label": "1 690-1 700 MHz (Nos. 5.381 and 5.382)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.381, 5.382)"
+        },
+        {
+          "frequency_min_hz": 1700000000,
+          "frequency_max_hz": 1710000000,
+          "label": "1 700-1 710 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 2025000000,
+          "frequency_max_hz": 2110000000,
+          "label": "2 025-2 110 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 2200000000,
+          "frequency_max_hz": 2300000000,
+          "label": "2 200-2 300 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Meteorological-satellite (space-to-Earth)",
+        "Space research (space-to-Earth) (space-to-space)",
+        "Space operation (space-to-Earth) (space-to-space)",
+        "Earth exploration-satellite (space-to-Earth) (space-to-space)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-154",
+          "source_text": "-154"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-154 + 0.5*(d - 5)",
+          "source_text": "-154 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-144",
+          "source_text": "-144"
+        }
+      ],
+      "footnotes": [
+        "21.16.1",
+        "21.16.5",
+        "21.16.3"
+      ],
+      "notes": [
+        "Band-to-service pairing in the printed cell is not row-aligned; all listed services are kept for all bands (conservative)."
+      ],
+      "source": "RR2024-V1",
+      "sharing_basis": [
+        {
+          "frequency_min_hz": 1670000000,
+          "frequency_max_hz": 1690000000,
+          "partners": [
+            "METAIDS"
+          ],
+          "basis": "No. 21.16.5: applicable where shared with equal rights with the meteorological aids service"
+        }
+      ]
+    },
+    {
+      "criterion_id": "T21-4-2500-2690-FSS-BSS-RDSS-MSS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 2500000000,
+          "frequency_max_hz": 2690000000,
+          "label": "2 500-2 690 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 2520000000,
+          "frequency_max_hz": 2670000000,
+          "label": "2 520-2 670 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 2500000000,
+          "frequency_max_hz": 2516500000,
+          "label": "2 500-2 516.5 MHz (No. 5.404)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.404: India, Iran)"
+        },
+        {
+          "frequency_min_hz": 2500000000,
+          "frequency_max_hz": 2520000000,
+          "label": "2 500-2 520 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 2520000000,
+          "frequency_max_hz": 2535000000,
+          "label": "2 520-2 535 MHz (No. 5.403)",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite",
+        "Broadcasting-satellite",
+        "Radiodetermination-satellite",
+        "Mobile-satellite",
+        "Mobile-satellite (except aeronautical mobile-satellite)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-136",
+          "source_text": "-136"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-136 + (11/20)*(d - 5)",
+          "source_text": "-136 + 11/20(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-125",
+          "source_text": "-125"
+        }
+      ],
+      "footnotes": [
+        "21.16.3A"
+      ],
+      "notes": [
+        "Band-to-service pairing in the printed cell is not row-aligned; all listed services are kept for all bands (conservative)."
+      ],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-3400-4200-FSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 3400000000,
+          "frequency_max_hz": 4200000000,
+          "label": "3 400-4 200 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-152",
+          "source_text": "-152"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-152 + 0.5*(d - 5)",
+          "source_text": "-152 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-142",
+          "source_text": "-142"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-3400-4200-FSS-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 287,
+        "pdf_page": 297
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 3400000000,
+          "frequency_max_hz": 4200000000,
+          "label": "3 400-4 200 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [
+        "Y"
+      ],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-138 - Y",
+          "source_text": "-138 - Y"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-138 - Y + (12 + Y)*(d - 5)/20",
+          "source_text": "-138 - Y + (12 + Y)(δ - 5)/20"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-126",
+          "source_text": "-126"
+        }
+      ],
+      "footnotes": [
+        "21.16.15",
+        "21.16.16"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-4500-7900-FSS-METSAT-MSS-SR",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 4500000000,
+          "frequency_max_hz": 4800000000,
+          "label": "4 500-4 800 MHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 5670000000,
+          "frequency_max_hz": 5725000000,
+          "label": "5 670-5 725 MHz (Nos. 5.453 and 5.455)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.453, 5.455)"
+        },
+        {
+          "frequency_min_hz": 7250000000,
+          "frequency_max_hz": 7900000000,
+          "label": "7 250-7 900 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)",
+        "Meteorological-satellite (space-to-Earth)",
+        "Mobile-satellite",
+        "Space research"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-152",
+          "source_text": "-152"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-152 + 0.5*(d - 5)",
+          "source_text": "-152 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-142",
+          "source_text": "-142"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-5150-5216-FSS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 5150000000,
+          "frequency_max_hz": 5216000000,
+          "label": "5 150-5 216 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 90,
+          "formula": "-164",
+          "source_text": "-164"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-6700-6825-FSS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 6700000000,
+          "frequency_max_hz": 6825000000,
+          "label": "6 700-6 825 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-137",
+          "source_text": "-137"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-137 + 0.5*(d - 5)",
+          "source_text": "-137 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-127",
+          "source_text": "-127"
+        }
+      ],
+      "footnotes": [
+        "21.16.7"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-6825-7075-FSS-4KHZ",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 6825000000,
+          "frequency_max_hz": 7075000000,
+          "label": "6 825-7 075 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-154",
+          "source_text": "-154"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-154 + 0.5*(d - 5)",
+          "source_text": "-154 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-144",
+          "source_text": "-144"
+        }
+      ],
+      "footnotes": [],
+      "notes": [
+        "Cell gives two limits joined by 'and'; this 4 kHz limit and T21-4-6825-7075-FSS-1MHZ both apply."
+      ],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-6825-7075-FSS-1MHZ",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 6825000000,
+          "frequency_max_hz": 7075000000,
+          "label": "6 825-7 075 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-134",
+          "source_text": "-134"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-134 + 0.5*(d - 5)",
+          "source_text": "-134 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-124",
+          "source_text": "-124"
+        }
+      ],
+      "footnotes": [],
+      "notes": [
+        "Cell gives two limits joined by 'and'; this 1 MHz limit and T21-4-6825-7075-FSS-4KHZ both apply."
+      ],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-8025-8500-EESS-SR",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 8025000000,
+          "frequency_max_hz": 8500000000,
+          "label": "8 025-8 500 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Earth exploration-satellite (space-to-Earth)",
+        "Space research (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-150",
+          "source_text": "-150"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-150 + 0.5*(d - 5)",
+          "source_text": "-150 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-140",
+          "source_text": "-140"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-9900-10400-EESS-ACTIVE",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 9900000000,
+          "frequency_max_hz": 10400000000,
+          "label": "9 900-10 400 MHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Earth exploration-satellite (active)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5.7,
+          "formula": "-113",
+          "source_text": "-113"
+        },
+        {
+          "elev_min_deg": 5.7,
+          "elev_max_deg": 53,
+          "formula": "-109 + 25*log10(d - 5)",
+          "source_text": "-109 + 25 log(δ - 5)"
+        },
+        {
+          "elev_min_deg": 53,
+          "elev_max_deg": 90,
+          "formula": "-66.6",
+          "source_text": "-66.6"
+        }
+      ],
+      "footnotes": [
+        "21.16.8"
+      ],
+      "notes": [
+        "Mean pfd as defined in No. 21.16.8 (SAR pulse duty cycle), not peak pfd."
+      ],
+      "source": "RR2024-V1",
+      "special_method": {
+        "provision": "No. 21.16.8",
+        "method": "mean_pfd_sar",
+        "description": "Mean pfd = P + 10log(τ) + 10log(PRF) - 30 - 10log(Bc) + Gt(θ) - 10log(4πd(θ)^2), using SAR pulse length, PRF, emission bandwidth and vertical-plane gain.",
+        "required_inputs": [
+          "sar_pulse_length_s",
+          "sar_prf_khz",
+          "sar_emission_bandwidth_mhz",
+          "vertical_plane_gain_pattern"
+        ],
+        "generic_is_upper_bound": true,
+        "upper_bound_reason": "Duty cycle τ·PRF <= 1 and Gt(θ) <= peak gain, so peak-density x peak-gain pfd >= mean pfd; a generic margin >= 0 remains valid, a negative one is inconclusive."
+      }
+    },
+    {
+      "criterion_id": "T21-4-10.7-11.7-FSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 10700000000,
+          "frequency_max_hz": 11700000000,
+          "label": "10.7-11.7 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-150",
+          "source_text": "-150"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-150 + 0.5*(d - 5)",
+          "source_text": "-150 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-140",
+          "source_text": "-140"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-10.7-11.7-FSS-NGSO-NONHEO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 10700000000,
+          "frequency_max_hz": 11700000000,
+          "label": "10.7-11.7 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "non_heo"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-126",
+          "source_text": "-126"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-126 + 0.5*(d - 5)",
+          "source_text": "-126 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-116",
+          "source_text": "-116"
+        }
+      ],
+      "footnotes": [
+        "21.16.18"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-10.7-12.75-FSS-NGSO-HEO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 288,
+        "pdf_page": 298
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 10700000000,
+          "frequency_max_hz": 11700000000,
+          "label": "10.7-11.7 GHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12500000000,
+          "label": "11.7-12.5 GHz (Region 1)",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 12500000000,
+          "frequency_max_hz": 12750000000,
+          "label": "12.5-12.75 GHz (Region 1 countries listed in Nos. 5.494 and 5.496)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.494, 5.496)"
+        },
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12700000000,
+          "label": "11.7-12.7 GHz (Region 2)",
+          "applies_in_finland": false,
+          "finland_note": "Not Region 1 / Finland"
+        },
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12750000000,
+          "label": "11.7-12.75 GHz (Region 3)",
+          "applies_in_finland": false,
+          "finland_note": "Not Region 1 / Finland"
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "heo"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-129",
+          "source_text": "-129"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-129 + 0.75*(d - 5)",
+          "source_text": "-129 + 0.75(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-114",
+          "source_text": "-114"
+        }
+      ],
+      "footnotes": [
+        "21.16.16",
+        "21.16.17"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-11.7-12.75-FSS-NGSO-NONHEO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12500000000,
+          "label": "11.7-12.5 GHz (Region 1)",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 12500000000,
+          "frequency_max_hz": 12750000000,
+          "label": "12.5-12.75 GHz (Region 1 countries listed in Nos. 5.494 and 5.496)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.494, 5.496)"
+        },
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12700000000,
+          "label": "11.7-12.7 GHz (Region 2)",
+          "applies_in_finland": false,
+          "finland_note": "Not Region 1 / Finland"
+        },
+        {
+          "frequency_min_hz": 11700000000,
+          "frequency_max_hz": 12750000000,
+          "label": "11.7-12.75 GHz (Region 3)",
+          "applies_in_finland": false,
+          "finland_note": "Not Region 1 / Finland"
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "non_heo"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-124",
+          "source_text": "-124"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-124 + 0.5*(d - 5)",
+          "source_text": "-124 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-114",
+          "source_text": "-114"
+        }
+      ],
+      "footnotes": [
+        "21.16.18"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-12.2-12.75-FSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 12200000000,
+          "frequency_max_hz": 12750000000,
+          "label": "12.2-12.75 GHz (Region 3) [fn 7]",
+          "applies_in_finland": false,
+          "finland_note": "Not Region 1 / Finland"
+        },
+        {
+          "frequency_min_hz": 12500000000,
+          "frequency_max_hz": 12750000000,
+          "label": "12.5-12.75 GHz (Region 1 countries listed in Nos. 5.494 and 5.496) [fn 7]",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.494, 5.496)"
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-148",
+          "source_text": "-148"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-148 + 0.5*(d - 5)",
+          "source_text": "-148 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-138",
+          "source_text": "-138"
+        }
+      ],
+      "footnotes": [
+        "21.16.1"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-13.4-13.65-FSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 13400000000,
+          "frequency_max_hz": 13650000000,
+          "label": "13.4-13.65 GHz (Region 1)",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 4000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 25,
+          "formula": "-159 + 0.4*d",
+          "source_text": "-159 + 0.4δ"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 80,
+          "formula": "-149",
+          "source_text": "-149"
+        },
+        {
+          "elev_min_deg": 80,
+          "elev_max_deg": 84,
+          "formula": "-149 - 0.5*(d - 80)",
+          "source_text": "-149 - 0.5(δ - 80)"
+        },
+        {
+          "elev_min_deg": 84,
+          "elev_max_deg": 90,
+          "formula": "-151",
+          "source_text": "-151"
+        }
+      ],
+      "footnotes": [
+        "21.16.9"
+      ],
+      "notes": [],
+      "source": "RR2024-V1",
+      "sharing_basis": [
+        {
+          "frequency_min_hz": 13400000000,
+          "frequency_max_hz": 13650000000,
+          "partners": [
+            "FIXED",
+            "MOBILE",
+            "EESS_ACTIVE",
+            "SR"
+          ],
+          "basis": "No. 21.16.9: values also based on sharing with EESS (active) and space research"
+        }
+      ]
+    },
+    {
+      "criterion_id": "T21-4-17.7-19.3-FSS-GSO-ISS-METSAT",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 17700000000,
+          "frequency_max_hz": 19300000000,
+          "label": "17.7-19.3 GHz [fn 7, 8]",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)",
+        "Inter-satellite",
+        "Meteorological-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "gso_or_metsat_or_iss_or_pre1995_ngso_18.8_19.3"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.1",
+        "21.16.2",
+        "21.16.6A",
+        "21.16.6B"
+      ],
+      "notes": [
+        "First alternative ('or') in the cell, governed by Nos. 21.16.6A/21.16.6B."
+      ],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-17.7-19.3-FSS-NGSO-X",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 17700000000,
+          "frequency_max_hz": 19300000000,
+          "label": "17.7-19.3 GHz [fn 7, 8]",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [
+        "X"
+      ],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115 - X",
+          "source_text": "-115 - X"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 - X + ((10 + X)/20)*(d - 5)",
+          "source_text": "-115 - X + ((10 + X)/20)(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.1",
+        "21.16.2",
+        "21.16.6"
+      ],
+      "notes": [
+        "Second alternative ('or') in the cell, governed by No. 21.16.6."
+      ],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-17.7-19.3-FSS-ISS-HEO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 17700000000,
+          "frequency_max_hz": 19300000000,
+          "label": "17.7-19.3 GHz [fn 7, 8]",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)",
+        "Inter-satellite"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "heo"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 3,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 3,
+          "elev_max_deg": 12,
+          "formula": "-120 + (8/9)*(d - 3)",
+          "source_text": "-120 + (8/9)(δ - 3)"
+        },
+        {
+          "elev_min_deg": 12,
+          "elev_max_deg": 25,
+          "formula": "-112 + (7/13)*(d - 12)",
+          "source_text": "-112 + (7/13)(δ - 12)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.6C"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-19.3-19.7-FSS-ISS-HEO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 289,
+        "pdf_page": 299
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 19300000000,
+          "frequency_max_hz": 19700000000,
+          "label": "19.3-19.7 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)",
+        "Inter-satellite"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "heo"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 3,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 3,
+          "elev_max_deg": 12,
+          "formula": "-120 + (8/9)*(d - 3)",
+          "source_text": "-120 + (8/9)(δ - 3)"
+        },
+        {
+          "elev_min_deg": 12,
+          "elev_max_deg": 25,
+          "formula": "-112 + (7/13)*(d - 12)",
+          "source_text": "-112 + (7/13)(δ - 12)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.6C"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-19.3-27.5-FSS-BSS-EESS-ISS-SR",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 19300000000,
+          "frequency_max_hz": 19700000000,
+          "label": "19.3-19.7 GHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 21400000000,
+          "frequency_max_hz": 22000000000,
+          "label": "21.4-22 GHz (Regions 1 and 3)",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 22550000000,
+          "frequency_max_hz": 23550000000,
+          "label": "22.55-23.55 GHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 24450000000,
+          "frequency_max_hz": 24750000000,
+          "label": "24.45-24.75 GHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 25250000000,
+          "frequency_max_hz": 27500000000,
+          "label": "25.25-27.5 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)",
+        "Broadcasting-satellite",
+        "Earth exploration-satellite (space-to-Earth)",
+        "Inter-satellite",
+        "Space research (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.6B"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-27.500-27.501-FSS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 27500000000,
+          "frequency_max_hz": 27501000000,
+          "label": "27.500-27.501 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (space-to-Earth)"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-27.5-30-ISS-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 27500000000,
+          "frequency_max_hz": 30000000000,
+          "label": "27.5-30.0 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Inter-satellite (non-geostationary satellite orbit)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-120 + 0.5*(d - 5)",
+          "source_text": "-120 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-110",
+          "source_text": "-110"
+        }
+      ],
+      "footnotes": [
+        "21.16.19"
+      ],
+      "notes": [
+        "No. 21.16.19: pfd computed with Annex 2 to Resolution 679 (WRC-23)."
+      ],
+      "source": "RR2024-V1",
+      "special_method": {
+        "provision": "No. 21.16.19",
+        "method": "resolution_679_annex_2",
+        "description": "pfd from non-GSO inter-satellite space stations in 27.5-30.0 GHz shall be calculated with Annex 2 to Resolution 679 (WRC-23).",
+        "required_inputs": [
+          "resolution_679_annex_2_method"
+        ],
+        "generic_is_upper_bound": false,
+        "upper_bound_reason": "Not established; the generic free-space value is reported for context only."
+      }
+    },
+    {
+      "criterion_id": "T21-4-31.0-31.3-34.7-35.2-SR",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 31000000000,
+          "frequency_max_hz": 31300000000,
+          "label": "31.0-31.3 GHz",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 34700000000,
+          "frequency_max_hz": 35200000000,
+          "label": "34.7-35.2 GHz (space-to-Earth transmissions referred to in No. 5.550 on the territories of countries listed in No. 5.549)",
+          "applies_in_finland": false,
+          "finland_note": "Finland is not listed in the referenced Article 5 footnote(s) (5.549)"
+        }
+      ],
+      "services": [
+        "Space research"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1",
+      "sharing_basis": [
+        {
+          "frequency_min_hz": 31000000000,
+          "frequency_max_hz": 31300000000,
+          "partners": [
+            "FIXED",
+            "MOBILE"
+          ],
+          "explicit": true,
+          "basis": "No. 5.544: Table 21-4 limits shall apply to the space research service in 31-31.3 GHz"
+        }
+      ]
+    },
+    {
+      "criterion_id": "T21-4-31.8-32.3-SR",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 31800000000,
+          "frequency_max_hz": 32300000000,
+          "label": "31.8-32.3 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Space research"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-120 + 0.75*(d - 5)",
+          "source_text": "-120 + 0.75(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.10"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-32.3-33-ISS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 32300000000,
+          "frequency_max_hz": 33000000000,
+          "label": "32.3-33 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Inter-satellite"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-135",
+          "source_text": "-135"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-135 + (d - 5)",
+          "source_text": "-135 + 1(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-115",
+          "source_text": "-115"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-37-38-SR-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 37000000000,
+          "frequency_max_hz": 38000000000,
+          "label": "37-38 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Space research (non-geostationary-satellite orbit)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-120 + 0.75*(d - 5)",
+          "source_text": "-120 + 0.75(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.10"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-37-38-SR-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 37000000000,
+          "frequency_max_hz": 38000000000,
+          "label": "37-38 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Space research (geostationary-satellite orbit)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-125",
+          "source_text": "-125"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-125 + (d - 5)",
+          "source_text": "-125 + 1(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-37.5-40-FSS-MSS-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 37500000000,
+          "frequency_max_hz": 40000000000,
+          "label": "37.5-40 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (non-geostationary-satellite orbit)",
+        "Mobile-satellite (non-geostationary-satellite orbit)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "ngso_99_or_fewer_satellites"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-120 + 0.75*(d - 5)",
+          "source_text": "-120 + 0.75(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.4",
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-37.5-40-FSS-MSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 37500000000,
+          "frequency_max_hz": 40000000000,
+          "label": "37.5-40 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (geostationary-satellite orbit)",
+        "Mobile-satellite (geostationary-satellite orbit)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-127",
+          "source_text": "-127"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 20,
+          "formula": "-127 + (4/3)*(d - 5)",
+          "source_text": "-127 + (4/3)(δ - 5)"
+        },
+        {
+          "elev_min_deg": 20,
+          "elev_max_deg": 25,
+          "formula": "-107 + 0.4*(d - 20)",
+          "source_text": "-107 + 0.4(δ - 20)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-40-40.5-FSS-MSS",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 40000000000,
+          "frequency_max_hz": 40500000000,
+          "label": "40-40.5 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite",
+        "Mobile-satellite"
+      ],
+      "orbit": "any",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-40.5-42-FSS-BSS-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 290,
+        "pdf_page": 300
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 40500000000,
+          "frequency_max_hz": 42000000000,
+          "label": "40.5-42 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (non-geostationary-satellite orbit)",
+        "Broadcasting-satellite (non-geostationary-satellite orbit)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "ngso_99_or_fewer_satellites"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.4",
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-40.5-42-FSS-BSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 291,
+        "pdf_page": 301
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 40500000000,
+          "frequency_max_hz": 42000000000,
+          "label": "40.5-42 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (geostationary-satellite orbit)",
+        "Broadcasting-satellite (geostationary-satellite orbit)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 15,
+          "formula": "-120 + (d - 5)",
+          "source_text": "-120 + (δ - 5)"
+        },
+        {
+          "elev_min_deg": 15,
+          "elev_max_deg": 25,
+          "formula": "-110 + 0.5*(d - 15)",
+          "source_text": "-110 + 0.5(δ - 15)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-42-42.5-FSS-BSS-NGSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 291,
+        "pdf_page": 301
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 42000000000,
+          "frequency_max_hz": 42500000000,
+          "label": "42-42.5 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (non-geostationary-satellite orbit)",
+        "Broadcasting-satellite (non-geostationary-satellite orbit)"
+      ],
+      "orbit": "non_gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [
+        "ngso_99_or_fewer_satellites"
+      ],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-120",
+          "source_text": "-120"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-120 + 0.75*(d - 5)",
+          "source_text": "-120 + 0.75(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.4",
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-42-42.5-FSS-BSS-GSO",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 291,
+        "pdf_page": 301
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 42000000000,
+          "frequency_max_hz": 42500000000,
+          "label": "42-42.5 GHz",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (geostationary-satellite orbit)",
+        "Broadcasting-satellite (geostationary-satellite orbit)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-127",
+          "source_text": "-127"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 20,
+          "formula": "-127 + (4/3)*(d - 5)",
+          "source_text": "-127 + (4/3)(δ - 5)"
+        },
+        {
+          "elev_min_deg": 20,
+          "elev_max_deg": 25,
+          "formula": "-107 + 0.4*(d - 20)",
+          "source_text": "-107 + 0.4(δ - 20)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [
+        "21.16.14"
+      ],
+      "notes": [],
+      "source": "RR2024-V1"
+    },
+    {
+      "criterion_id": "T21-4-47.5-50.2-FSS-GSO-R1",
+      "kind": "hard_limit",
+      "provision": "RR Article 21, No. 21.16, Table 21-4",
+      "location": {
+        "printed_page": 291,
+        "pdf_page": 301
+      },
+      "bands": [
+        {
+          "frequency_min_hz": 47500000000,
+          "frequency_max_hz": 47900000000,
+          "label": "47.5-47.9 GHz (Region 1)",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 48200000000,
+          "frequency_max_hz": 48540000000,
+          "label": "48.2-48.54 GHz (Region 1)",
+          "applies_in_finland": true
+        },
+        {
+          "frequency_min_hz": 49440000000,
+          "frequency_max_hz": 50200000000,
+          "label": "49.44-50.2 GHz (Region 1)",
+          "applies_in_finland": true
+        }
+      ],
+      "services": [
+        "Fixed-satellite (geostationary-satellite orbit)"
+      ],
+      "orbit": "gso",
+      "reference_bandwidth_hz": 1000000,
+      "parameters": [],
+      "conditions": [],
+      "segments": [
+        {
+          "elev_min_deg": 0,
+          "elev_max_deg": 5,
+          "formula": "-115",
+          "source_text": "-115"
+        },
+        {
+          "elev_min_deg": 5,
+          "elev_max_deg": 25,
+          "formula": "-115 + 0.5*(d - 5)",
+          "source_text": "-115 + 0.5(δ - 5)"
+        },
+        {
+          "elev_min_deg": 25,
+          "elev_max_deg": 90,
+          "formula": "-105",
+          "source_text": "-105"
+        }
+      ],
+      "footnotes": [],
+      "notes": [],
+      "source": "RR2024-V1"
+    }
+  ],
+  "special_methods_note": "Criteria with 'special_method' need the cited calculation method; the generic worst-case calculation gives a verdict only where 'generic_is_upper_bound' is true and the margin is non-negative.",
+  "sharing_basis_note": "No. 21.16 applies limits where bands are shared with equal rights with the fixed or mobile service 'unless otherwise stated'. 'sharing_basis' records the rows where the regulations state another basis."
+}

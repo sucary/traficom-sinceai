@@ -9,7 +9,10 @@ def extract_mdb(path, destination, dataset_id, catalog_only=False):
 
     database = AccessParser(str(path))
     catalog = sorted(name for name in database.catalog if not name.startswith("MSys"))
-    selected = TERRESTRIAL_TABLES if path.name.startswith("brific") else SPACE_TABLES
+    # Filename conventions vary between the downloadable extract, DVD and user
+    # copies.  The table catalogue is authoritative; a terrestrial extract is
+    # identified by its FXM primary table rather than by a fragile name prefix.
+    selected = TERRESTRIAL_TABLES if "fxm_terra" in catalog else SPACE_TABLES
     result = {"catalog": catalog, "tables": {}, "scope": "catalog_only" if catalog_only else "selected_tables",
               "notes": ["Raw values only; ITU units and relationships must be validated before analysis.",
                         "Source row is extraction order, not an ITU notice identifier.",

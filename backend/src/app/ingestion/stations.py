@@ -5,6 +5,9 @@ from .specs import SHEET
 
 FREQUENCY_PATTERN = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*(Hz|kHz|MHz|GHz)\s*$", re.I)
 FACTORS = {"hz": Decimal(1), "khz": Decimal(1000), "mhz": Decimal(1000000), "ghz": Decimal(1000000000)}
+COMPACT_BANDWIDTH_PATTERN = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*([HKMG])\s*$", re.I)
+DESIGNATOR_BANDWIDTH_PATTERN = re.compile(r"^\s*(\d+)\s*([HKMG])\s*(\d+)\s*$", re.I)
+COMPACT_FACTORS = {"h": Decimal(1), "k": Decimal(1000), "m": Decimal(1000000), "g": Decimal(1000000000)}
 
 
 def frequency_hz(value):
@@ -16,6 +19,27 @@ def frequency_hz(value):
     result = Decimal(match[1]) * FACTORS[match[2].lower()]
     if not result.is_finite() or result <= 0 or result != result.to_integral_value():
         raise ValueError(f"Frequency must be positive, with whole-Hz precision: {value!r}")
+    return int(result)
+
+
+def compact_bandwidth_hz(value):
+    """Parse the workbook's compact/ITU-style transmission bandwidth values."""
+    if value is None or str(value).strip() == "":
+        return None
+    text = str(value).strip()
+    match = DESIGNATOR_BANDWIDTH_PATTERN.fullmatch(text)
+    if match:
+        amount = Decimal(f"{match[1]}.{match[3]}")
+        unit = match[2].lower()
+    else:
+        match = COMPACT_BANDWIDTH_PATTERN.fullmatch(text)
+        if not match:
+            raise ValueError(f"Unsupported transmission bandwidth: {value!r}")
+        amount = Decimal(match[1].replace(",", "."))
+        unit = match[2].lower()
+    result = amount * COMPACT_FACTORS[unit]
+    if not result.is_finite() or result <= 0 or result != result.to_integral_value():
+        raise ValueError(f"Bandwidth must be positive, with whole-Hz precision: {value!r}")
     return int(result)
 
 
@@ -41,6 +65,25 @@ def normalize_station(raw, source_row, dataset_id):
         except (ValueError, InvalidOperation):
             record[target] = None
             flags.append("invalid_" + name)
+    try:
+        record["transmission_bandwidth_hz"] = compact_bandwidth_hz(raw["transmission_bandwidth"])
+    except (ValueError, InvalidOperation):
+        record["transmission_bandwidth_hz"] = None
+        flags.append("invalid_transmission_bandwidth")
+    channel = record["channel_bandwidth_hz"]
+    transmission = record["transmission_bandwidth_hz"]
+    available_bandwidths = [value for value in (channel, transmission) if value is not None]
+    record["effective_bandwidth_hz"] = min(available_bandwidths, default=None)
+    if channel is not None and transmission is not None:
+        record["effective_bandwidth_source"] = (
+            "channel_and_transmission_equal" if channel == transmission else "smaller_of_channel_and_transmission"
+        )
+    elif channel is not None:
+        record["effective_bandwidth_source"] = "channel_only"
+    elif transmission is not None:
+        record["effective_bandwidth_source"] = "transmission_only"
+    else:
+        record["effective_bandwidth_source"] = "missing"
     for name in ("longitude", "latitude", "ground_height_m", "mast_height_m",
                  "antenna_height_agl_m", "antenna_height_asl_m", "antenna_gain_db",
                  "radiation_direction_deg", "line_loss_db"):

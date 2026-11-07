@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "access-parser==0.0.6",
     "openpyxl==3.1.5",
+    "Py1546 @ git+https://github.com/eeveetza/Py1546.git@e235629009ab1a12a33fc4a8fb5612f2883ecb5b",
     "psycopg[binary]==3.3.8",
 ]
 
@@ -21,5 +22,5 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.package-data]
-app = ["db/migrations/*.sql"]
+app = ["db/migrations/*.sql", "reference/*.json", "reference/*.geojson"]
 

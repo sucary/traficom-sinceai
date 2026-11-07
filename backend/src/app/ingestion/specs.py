@@ -1,11 +1,12 @@
 SPACE_TABLES = (
     "notice", "grp", "freq", "assgn", "emiss", "s_beam", "geo",
-    "non_geo", "orbit", "pub_ssn", "srs_ooak",
+    "non_geo", "orbit", "carrier_fr", "pub_ssn", "srs_ooak", "srv_cls",
 )
 
 TERRESTRIAL_TABLES = (
     "circ", "pub_current_circ", "fxm_terra", "fxm_tx", "fxm_rx",
-    "fxm_ant", "fxm_status", "fxm_pub_hist", "ref_adm", "ref_stn_cls",
+    "fxm_ant", "fxm_ant_hgt", "fxm_geo", "fxm_geo_pt", "fxm_status",
+    "fxm_pub_hist", "ref_adm", "ref_stn_cls",
 )
 
 SHEET = "Frequencies of interest"

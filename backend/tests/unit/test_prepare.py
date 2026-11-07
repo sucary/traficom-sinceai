@@ -1,7 +1,7 @@
 import unittest
 
 from app.ingestion.specs import HEADERS
-from app.ingestion.stations import frequency_hz, normalize_station
+from app.ingestion.stations import compact_bandwidth_hz, frequency_hz, normalize_station
 
 
 class FrequencyTests(unittest.TestCase):
@@ -15,6 +15,12 @@ class FrequencyTests(unittest.TestCase):
         for value in ("100", "1 bananas", "0 MHz", "-1 MHz", "0.5 Hz"):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 frequency_hz(value)
+
+    def test_compact_transmission_bandwidth(self):
+        expected = {"5000k": 5000000, "8M00": 8000000, "10k0": 10000, "7,6k": 7600, "0,1G": 100000000}
+        for value, result in expected.items():
+            with self.subTest(value=value):
+                self.assertEqual(compact_bandwidth_hz(value), result)
 
 
 class StationTests(unittest.TestCase):
@@ -33,6 +39,12 @@ class StationTests(unittest.TestCase):
         self.assertEqual(row["rx_frequency_hz"], 100000000)
         self.assertEqual(row["source_row"], 13)
         self.assertEqual(row["quality_flags"], [])
+
+    def test_smaller_bandwidth_is_selected(self):
+        row = normalize_station(self.raw(channel_bandwidth="2500 kHz", transmission_bandwidth="118600k"), 13, "dataset")
+        self.assertEqual(row["transmission_bandwidth_hz"], 118600000)
+        self.assertEqual(row["effective_bandwidth_hz"], 2500000)
+        self.assertEqual(row["effective_bandwidth_source"], "smaller_of_channel_and_transmission")
 
     def test_invalid_values_preserved(self):
         raw = self.raw(antenna_height_agl_m=-2, antenna_height_asl_m=18, latitude=95)
