@@ -9,9 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDir, "../..");
-const resultsPath = path.join(root, "output/pfd-calculations/case_pfd_results.jsonl");
+// Optional argument: the issue output folder, e.g. output/ific3074 (the default).
+const issueDir = path.resolve(root, process.argv[2] ?? "output/ific3074");
+const resultsPath = path.join(issueDir, "pfd-calculations/case_pfd_results.jsonl");
 const criteriaPath = path.join(root, "backend/src/app/reference/pfd_criteria.json");
-const outputDir = path.join(root, "output/pfd-validation");
+const outputDir = path.join(issueDir, "pfd-validation");
 const summaryPath = path.join(outputDir, "independent_validation_summary.json");
 const discrepanciesPath = path.join(outputDir, "discrepancies.jsonl");
 

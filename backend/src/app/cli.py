@@ -11,6 +11,11 @@ from .config import PREPARED_DIRECTORY, PROJECT_ROOT, add_connection_arguments
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
+    run_parser = commands.add_parser(
+        'run', help='Calculate one IFIC file (ificNNNN.mdb = space, brificNNNN.mdb = terrestrial)'
+    )
+    run_parser.add_argument('file', help='IFIC file in data/, e.g. ific3074.mdb or brific3076.mdb')
+    run_parser.add_argument('--output-root', type=Path, default=PROJECT_ROOT / 'output')
     prepare_parser = commands.add_parser('prepare', help='Extract inputs locally; no database connection')
     prepare_parser.add_argument('--root', type=Path, default=PROJECT_ROOT)
     prepare_parser.add_argument('--output', type=Path, default=PREPARED_DIRECTORY)
@@ -76,6 +81,10 @@ def main(argv=None):
     if args.command in {'load', 'migrate'} and not args.ca.is_file():
         parser.error('CA certificate file does not exist')
     try:
+        if args.command == 'run':
+            from .analysis.run_issues import run
+            print(json.dumps(run(args.file, args.output_root), indent=2))
+            return 0
         if args.command == 'prepare':
             from .ingestion.prepare import prepare
             manifest = prepare(args.root.resolve(), args.output.resolve(), args.catalog_only, args.only)
@@ -124,7 +133,7 @@ def main(argv=None):
                 print(json.dumps(load(connection, args.prepared.resolve())))
     except Exception as error:
         # Connection exceptions can contain sensitive details.
-        if args.command in {'prepare', 'rebuild-analysis'}:
+        if args.command in {'prepare', 'rebuild-analysis', 'run'}:
             print(f'{args.command.capitalize()} failed ({type(error).__name__}): {error}', file=sys.stderr)
         else:
             print(f'{args.command.capitalize()} failed ({type(error).__name__}); transaction rolled back.', file=sys.stderr)
