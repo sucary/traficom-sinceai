@@ -16,6 +16,7 @@ langchain-text-splitters
 # API-kutsut ja ympäristömuuttujat
 requests
 python-dotenv
+streamlit
 
 # Tietokantayhteys Aiveniin (PostgreSQL)
 SQLAlchemy
