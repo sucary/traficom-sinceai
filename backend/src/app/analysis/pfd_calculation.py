@@ -34,7 +34,7 @@ from ..reference.pfd_criteria import (
 
 
 METHOD = "worst_case_pfd_free_space"
-METHOD_VERSION = "1.3.1"
+METHOD_VERSION = "1.3.2"
 EARTH_RADIUS_KM = 6378.137
 GSO_RADIUS_KM = 42164.0
 ELEVATION_STEP_DEG = 0.1
@@ -785,7 +785,8 @@ def run(readiness_dir, cases_path, output, near_margin_db=DEFAULT_NEAR_MARGIN_DB
             "band": {k: finnish[k] for k in ("frequency_min_hz", "frequency_max_hz", "bandwidth_hz", "center_hz")},
             "frequency_role": finnish["frequency_role"],
             "space": {k: space.get(k) for k in ("dataset_id", "file", "dataset_kind", "issue", "notice_source_row",
-                                                 "notice_id", "administration", "notice_type", "provision", "action_code")},
+                                                 "notice_id", "administration", "notice_type", "provision", "action_code",
+                                                 "notice_publication_issue", "publication_date")},
             "finnish_usage": {k: finnish.get(k) for k in (
                 "dataset_id", "file", "source_table", "source_row", "station_number"
             )},
@@ -797,6 +798,7 @@ def run(readiness_dir, cases_path, output, near_margin_db=DEFAULT_NEAR_MARGIN_DB
     summary_path = output / "pfd_summary.json"
     fields = ("run_id", "case_id", "space_file", "space_dataset_id", "space_sha256", "notice_source_row",
               "notice_id", "administration", "satellite_names", "provision", "action_code",
+              "notice_publication_issue", "publication_date",
               "orbit", "station_number", "frequency_role", "protected_center_hz", "frequency_relation", "status", "margin_class",
               "applicability_confirmed",
               "worst_margin_db", "pfd_db", "limit_db", "reference_bandwidth_hz", "worst_elevation_deg",
@@ -835,6 +837,8 @@ def run(readiness_dir, cases_path, output, near_margin_db=DEFAULT_NEAR_MARGIN_DB
                 "notice_id": context["space"]["notice_id"], "administration": context["space"]["administration"],
                 "satellite_names": "|".join(context["satellite_names"]), "provision": context["space"]["provision"],
                 "action_code": context["space"]["action_code"],
+                "notice_publication_issue": context["space"]["notice_publication_issue"],
+                "publication_date": context["space"]["publication_date"],
                 "orbit": (result.get("geometry") or {}).get("orbit"),
                 "station_number": result["finnish_station"]["station_number"],
                 "frequency_role": context["frequency_role"], "protected_center_hz": context["band"]["center_hz"],
