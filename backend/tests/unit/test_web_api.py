@@ -192,7 +192,6 @@ class FrontendApiTests(unittest.TestCase):
 
 
 class SelectionCompletenessTests(unittest.TestCase):
-    """Regression: a chat about one administration listed 8 of 19 notices as if complete."""
 
     def test_every_matching_notice_reaches_the_model(self):
         many = [dict(ASSESSMENT["notices"][0], key=f"ific3074:{i}", noticeId=str(i)) for i in range(19)]
@@ -269,8 +268,8 @@ class StreamEncodingTests(unittest.TestCase):
         from app.web_api import _stream_completion
         response = requests.models.Response()
         response.status_code = 200
-        response.headers["Content-Type"] = "text/event-stream"  # no charset, as OpenCode sends it
-        response.encoding = requests.utils.get_encoding_from_headers(response.headers)  # ISO-8859-1
+        response.headers["Content-Type"] = "text/event-stream"
+        response.encoding = requests.utils.get_encoding_from_headers(response.headers)
         payload = json.dumps({"choices": [{"delta": {"content": "PFD -95.06 dB(W/m²), 40 dB(µV/m)"}}]}, ensure_ascii=False)
         response.raw = io.BytesIO(f"data: {payload}\n\ndata: [DONE]\n\n".encode("utf-8"))
         mock_post.return_value = response
@@ -289,13 +288,17 @@ class UsageViewTests(unittest.TestCase):
 
     def test_usage_summary_is_added_with_station_total(self):
         stations = [{"id": str(i), "worstMarginDb": -1.0} for i in range(40)]
-        data = dict(ASSESSMENT, usage={"definitions": {"band": "M4 band"}, "bands": [{"band": "2200 MHz to 2245 MHz"}],
-                                       "stations": stations})
+        data = dict(ASSESSMENT, usageByIssue={
+            "ific3074": {"definitions": {"band": "M4 band"}, "bands": [{"band": "2200 MHz to 2245 MHz"}],
+                         "stations": stations},
+            "brific3076": {"bands": [{"band": "791 MHz to 862 MHz"}], "stations": []}})
         body = {"messages": [{"role": "user", "content": "Which station is most affected?"}]}
         messages = _model_messages(data, body, data["notices"])
         usage = messages[-1]["content"]
-        self.assertIn("30 most affected of 40", usage)
+        self.assertIn('"stationsTotal":40', usage)
+        self.assertEqual(usage.count('"worstMarginDb"'), 30)
         self.assertIn("2200 MHz to 2245 MHz", usage)
+        self.assertNotIn("791 MHz to 862 MHz", usage)
 
 
 class FunnelTests(unittest.TestCase):
@@ -307,3 +310,76 @@ class FunnelTests(unittest.TestCase):
         content = _model_messages(data, body, data["notices"])[-1]["content"]
         self.assertIn('"IFIC 3074":[{"stage":"Notices published in the IFIC","count":196}', content)
         self.assertIn("notices of concern", content)
+
+
+class RoutingTests(unittest.TestCase):
+    DATA = {
+        "issues": [
+            {"id": "ific3074", "label": "IFIC 3074", "kind": "Space"},
+            {"id": "ific3088", "label": "IFIC 3088", "kind": "Space"},
+            {"id": "brific3076", "label": "BR IFIC 3076", "kind": "Terrestrial",
+             "regulatoryFramework": [{"provision": "RR No. 4.3"}]},
+        ],
+        "notices": [{"issueId": "ific3074"}, {"issueId": "ific3088"}, {"issueId": "brific3076"}],
+        "trends": [{"issueId": "brific3076", "anomalies": [{"type": "new_activity"}]}],
+    }
+
+    @staticmethod
+    def body(question, ref=None):
+        return {"messages": [{"role": "user", "content": question}], "context": {"ref": ref} if ref else {}}
+
+    def test_domain_words_pick_latest_issue_of_that_domain(self):
+        from app.web_api import route_request
+        self.assertEqual(route_request(self.DATA, self.body("Which satellite notices exceed?"))["issue_ids"], ["ific3088"])
+        self.assertEqual(route_request(self.DATA, self.body("Which terrestrial notices exceed?"))["issue_ids"], ["brific3076"])
+        self.assertEqual(route_request(self.DATA, self.body("What is most urgent?"))["issue_ids"], ["ific3088", "brific3076"])
+
+    def test_page_context_and_named_issue_win(self):
+        from app.web_api import route_request
+        self.assertEqual(route_request(self.DATA, self.body("Explain", "notice:ific3074:123"))["issue_ids"], ["ific3074"])
+        self.assertEqual(route_request(self.DATA, self.body("What did IFIC 3074 show?"))["issue_ids"], ["ific3074"])
+
+    def test_trend_and_framework_questions_get_their_data(self):
+        from app.web_api import _model_messages, route_request, scoped_data
+        body = self.body("Any anomalies in neighbour activity, and which regulation applies?")
+        scope = route_request(self.DATA, body)
+        self.assertTrue(scope["wants_trends"] and scope["wants_framework"])
+        messages = _model_messages(scoped_data(self.DATA, scope), body, [], scope)
+        text = "\n".join(m["content"] for m in messages if m["role"] == "system")
+        self.assertIn("not interference findings", text)
+        self.assertIn("RR No. 4.3", text)
+        self.assertIn("Scope:", text)
+
+
+class MixedScopeTests(unittest.TestCase):
+    def test_page_context_extends_to_named_domain_and_framework(self):
+        from app.web_api import _model_messages, route_request, scoped_data
+        data = {**RoutingTests.DATA,
+                "notices": [{"issueId": "ific3074", "noticeId": "124545403"}, {"issueId": "brific3076", "noticeId": "126080975"}]}
+        body = RoutingTests.body("What regulations apply to terrestrial border coordination? Is notice 124545403 used in Finland?",
+                                 "notice:ific3074:124545403")
+        scope = route_request(data, body)
+        self.assertEqual(scope["issue_ids"], ["ific3074", "brific3076"])
+        text = "\n".join(m["content"] for m in _model_messages(scoped_data(data, scope), body, [], scope))
+        self.assertIn("RR No. 4.3", text)
+
+    def test_notice_id_adds_its_issue(self):
+        from app.web_api import route_request
+        data = {**RoutingTests.DATA, "notices": [{"issueId": "ific3074", "noticeId": "124545403"}]}
+        scope = route_request(data, RoutingTests.body("Which terrestrial notices exceed, and what about 124545403?"))
+        self.assertEqual(scope["issue_ids"], ["brific3076", "ific3074"])
+
+
+class IssueNameRoutingTests(unittest.TestCase):
+    def test_br_ific_name_is_not_a_space_question(self):
+        from app.web_api import route_request
+        question = "Which Finnish frequency bands and stations are most affected in BR IFIC 3076?"
+        scope = route_request(RoutingTests.DATA, RoutingTests.body(question, "issue:brific3076"))
+        self.assertEqual(scope["issue_ids"], ["brific3076"])
+        scope = route_request(RoutingTests.DATA, RoutingTests.body(question))
+        self.assertEqual(scope["issue_ids"], ["brific3076"])
+
+    def test_space_issue_name_still_selects_space(self):
+        from app.web_api import route_request
+        scope = route_request(RoutingTests.DATA, RoutingTests.body("What did IFIC 3074 show?"))
+        self.assertEqual(scope["issue_ids"], ["ific3074"])

@@ -24,7 +24,6 @@ const SUGGESTIONS = [
   "Draft a letter to the Russian Federation",
 ];
 
-// Streams one answer into the assistant message `assistantId`.
 async function runAnswer(
   conversationId: string,
   assistantId: string,
@@ -46,7 +45,7 @@ async function runAnswer(
       updateMessage(conversationId, assistantId, (m) => {
         switch (e.type) {
           case "reasoning":
-            return m; // status steps are no longer shown
+            return m;
           case "thinking":
             return { ...m, thinking: (m.thinking ?? "") + e.text };
           case "text":
@@ -139,7 +138,6 @@ function Composer({
   );
 }
 
-// The model's thinking, collapsed by default (also while it streams).
 function Thinking({ text, active }: { text: string; active: boolean }) {
   return (
     <details className="reasoning">
@@ -266,9 +264,6 @@ export function ChatPage({ conversationId, header }: { conversationId?: string; 
     runAnswer(conv.id, assistantId, context, controllers);
   }
 
-  // A question handed over from a notice, station or other page opens a new chat with the
-  // question prefilled (not sent), keeping where it came from as context. Sending here on
-  // mount was aborted by React StrictMode's simulated unmount and showed "Stopped".
   useEffect(() => {
     const q = takeQueuedQuestion();
     if (q) {
@@ -281,7 +276,6 @@ export function ChatPage({ conversationId, header }: { conversationId?: string; 
     endRef.current?.scrollIntoView({ block: "end" });
   }, [conv?.messages.length, conv?.messages[conv.messages.length - 1]?.content.length]);
 
-  // Stop streaming when leaving the page.
   useEffect(() => () => controllers.forEach((c) => c.abort()), [controllers]);
 
   const empty = !conv || conv.messages.length === 0;

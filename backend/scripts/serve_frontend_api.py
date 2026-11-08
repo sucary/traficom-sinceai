@@ -1,5 +1,3 @@
-"""Start the HTTP API used by the React assessment frontend."""
-
 from pathlib import Path
 import sys
 

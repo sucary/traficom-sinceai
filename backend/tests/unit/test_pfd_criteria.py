@@ -5,9 +5,7 @@ from app.reference.pfd_criteria import (
     criteria_for, criterion_by_id, evaluate_formula, formula_variables, limit_at, load_criteria,
 )
 
-# Printed constants are rounded, so log-formula rows step by a few thousandths of a dB.
 ROUNDING_TOLERANCE_DB = 0.01
-# Larger steps that are printed that way in the source, checked against the PDF.
 KNOWN_SOURCE_STEPS = {
     ("T21-4-1518-1525-MSS-USA-71W-125W", 4),
     ("T21-4-9900-10400-EESS-ACTIVE", 5.7),
@@ -128,7 +126,6 @@ class LookupTests(unittest.TestCase):
         self.assertEqual(result[0]["status"], "no_criterion")
 
     def test_emission_touching_band_edge_is_not_in_band(self):
-        # Beidou RDSS downlink ends at exactly 2 500 MHz: not inside 2 500-2 690 MHz.
         self.assertEqual(self.ids(2_483_500_000, 2_500_000_000, "gso"), {None})
         self.assertEqual(self.ids(2_500_000_000, 2_500_000_000, "gso"), {None})
         self.assertIn("T21-4-2500-2690-FSS-BSS-RDSS-MSS", self.ids(2_499_000_000, 2_501_000_000, "gso"))

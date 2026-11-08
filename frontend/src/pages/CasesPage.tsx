@@ -4,7 +4,6 @@ import { Ref } from "../components/RichText";
 import { noticeRef } from "../links";
 import { BackIcon } from "../components/Icons";
 
-/** Every case (space) or assessment point (terrestrial) of one notice. */
 export function CasesPage({ notice }: { notice: Notice }) {
   const space = notice.kind === "Space";
   return (

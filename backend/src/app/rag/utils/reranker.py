@@ -1,13 +1,8 @@
-# utils/reranker.py
 import re
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
 class MetaLlamaReranker:
-    """
-    Reranks a list of text chunks by asking meta-llama/Llama-3.2-3B-Instruct
-    to score each one from 0–10.
-    """
     def __init__(
         self,
         model_name: str = "meta-llama/Llama-3.2-3B-Instruct",
@@ -49,6 +44,5 @@ class MetaLlamaReranker:
             score = int(m.group(1)) if m else 0
             scored.append((chunk, score))
 
-        # sort descending
         scored.sort(key=lambda x: x[1], reverse=True)
         return [chunk for chunk, _ in scored[:top_n]]

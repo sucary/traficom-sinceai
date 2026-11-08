@@ -1,5 +1,3 @@
-"""Command entry points for preparing, matching and loading challenge data."""
-
 import argparse
 import json
 from pathlib import Path
@@ -14,8 +12,9 @@ def main(argv=None):
     run_parser = commands.add_parser(
         'run', help='Calculate one IFIC file (ificNNNN.mdb = space, brificNNNN.mdb = terrestrial)'
     )
-    run_parser.add_argument('file', help='IFIC file in data/, e.g. ific3074.mdb or brific3076.mdb')
+    run_parser.add_argument('files', nargs='+', help='IFIC files in data/, e.g. ific3074.mdb brific3076.mdb')
     run_parser.add_argument('--output-root', type=Path, default=PROJECT_ROOT / 'output')
+    run_parser.add_argument('--no-export', action='store_true', help='Do not refresh the app data afterwards')
     prepare_parser = commands.add_parser('prepare', help='Extract inputs locally; no database connection')
     prepare_parser.add_argument('--root', type=Path, default=PROJECT_ROOT)
     prepare_parser.add_argument('--output', type=Path, default=PREPARED_DIRECTORY)
@@ -82,9 +81,19 @@ def main(argv=None):
         parser.error('CA certificate file does not exist')
     try:
         if args.command == 'run':
-            from .analysis.run_issues import run
-            print(json.dumps(run(args.file, args.output_root), indent=2))
-            return 0
+            from .analysis.run_issues import run, run_many
+            if len(args.files) == 1:
+                results = [run(args.files[0], args.output_root)]
+                print(json.dumps(results[0], indent=2))
+            else:
+                results = run_many(args.files, args.output_root)
+                print(json.dumps(results, indent=2))
+            if not args.no_export:
+                import subprocess
+                export = PROJECT_ROOT / 'backend' / 'scripts' / 'export_frontend_data.py'
+                subprocess.run([sys.executable, str(export)], cwd=PROJECT_ROOT, check=True,
+                               stdout=sys.stderr)
+            return 1 if any(r.get('status') == 'failed' for r in results) else 0
         if args.command == 'prepare':
             from .ingestion.prepare import prepare
             manifest = prepare(args.root.resolve(), args.output.resolve(), args.catalog_only, args.only)
@@ -132,7 +141,6 @@ def main(argv=None):
                 from .db.loader import load
                 print(json.dumps(load(connection, args.prepared.resolve())))
     except Exception as error:
-        # Connection exceptions can contain sensitive details.
         if args.command in {'prepare', 'rebuild-analysis', 'run'}:
             print(f'{args.command.capitalize()} failed ({type(error).__name__}): {error}', file=sys.stderr)
         else:

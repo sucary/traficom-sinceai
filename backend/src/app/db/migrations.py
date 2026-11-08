@@ -1,5 +1,3 @@
-"""Apply packaged SQL migrations once, verifying previously applied checksums."""
-
 import hashlib
 from importlib.resources import files
 

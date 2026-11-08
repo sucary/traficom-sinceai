@@ -1,38 +1,26 @@
-import { Issue, label } from "../data";
+import { Issue } from "../data";
 import { count } from "../format";
 import { go } from "../router";
 
-const order = [
-  "exceeds_limit",
-  "exceeds_threshold",
-  "near_limit",
-  "near_threshold",
-  "unallocated_service_rr_4_4",
-  "below_limit",
-  "below_threshold",
-];
-
 export function Overview({ issue }: { issue: Issue }) {
-  const statuses = Object.keys(issue.counts).sort((a, b) => {
-    const ia = order.indexOf(a), ib = order.indexOf(b);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || issue.counts[b] - issue.counts[a];
-  });
   return (
-    <div className="stats">
-      <div className="stat lead">
-        <strong>{count(issue.noticesOfConcern)}</strong>
-        Notices of concern
-      </div>
-      {statuses.map((s) => (
-        <div className="stat" key={s}>
-          <strong>{count(issue.counts[s])}</strong>
-          {label(s)}
+    <>
+      <div className="stats">
+        <div className="stat lead">
+          <strong>{count(issue.noticesOfConcern)}</strong>
+          Notices of concern
         </div>
-      ))}
-      <button className="stat impact-link" onClick={() => go({ view: "usage" })}>
-        <span>Impact on Finnish use</span>
-        <span className="impact-arrow" aria-hidden="true">→</span>
-      </button>
-    </div>
+        {(issue.highlights ?? []).map((h) => (
+          <div className="stat" key={h.label}>
+            <strong>{count(h.value ?? 0)}</strong>
+            {h.label}
+          </div>
+        ))}
+        <button className="stat impact-link" onClick={() => go({ view: "usage", issueId: issue.id })}>
+          <span>Impact on Finnish use</span>
+          <span className="impact-arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </>
   );
 }

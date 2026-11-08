@@ -1,5 +1,3 @@
-"""Print model-generated explanations for the highest-priority assessment results."""
-
 import argparse
 import json
 import os

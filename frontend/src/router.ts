@@ -10,7 +10,7 @@ export type Route =
   | { view: "stats"; id: string }
   | { view: "notices"; scope: "issue" | "administration"; key: string }
   | { view: "cases"; key: string }
-  | { view: "usage" };
+  | { view: "usage"; issueId: string };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -43,7 +43,8 @@ function parse(hash: string): Route {
       if (parts[1]) return { view: "cases", key: parts[1] };
       break;
     case "usage":
-      return { view: "usage" };
+      if (parts[1]) return { view: "usage", issueId: parts[1] };
+      break;
   }
   return { view: "home" };
 }
@@ -71,7 +72,7 @@ export function href(route: Route): string {
     case "cases":
       return `#/cases/${enc(route.key)}`;
     case "usage":
-      return "#/usage";
+      return `#/usage/${enc(route.issueId)}`;
   }
 }
 
@@ -85,7 +86,6 @@ export function useRoute(): Route {
     const onChange = () => {
       const next = parse(window.location.hash);
       setRoute((prev) => {
-        // Switching conversations keeps the scroll position handled by the chat page.
         if (!(prev.view === "chat" && next.view === "chat")) window.scrollTo(0, 0);
         return next;
       });

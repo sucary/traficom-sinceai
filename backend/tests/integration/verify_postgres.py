@@ -1,5 +1,3 @@
-"""Integration check for the disposable localhost PostgreSQL cluster only."""
-
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory

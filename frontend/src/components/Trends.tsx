@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Assessment } from "../data";
-import { CARD_ROWS, Chart, ChartRow, charts } from "../charts";
+import { CARD_ROWS, Chart, ChartRow, ChartSort, charts, sortedRows } from "../charts";
+import { Dropdown } from "./Dropdown";
 import { count } from "../format";
 import { go } from "../router";
 import { Ref } from "./RichText";
@@ -69,11 +71,31 @@ function Bars({ chart, rows }: { chart: Chart; rows: ChartRow[] }) {
 }
 
 function ChartCard({ chart }: { chart: Chart }) {
-  const rows = chart.rows.slice(0, CARD_ROWS[chart.form]);
+  const [sort, setSort] = useState<ChartSort>("date");
+  const rows = chart.sortable
+    ? sortedRows(chart, sort, CARD_ROWS[chart.form])
+    : chart.rows.slice(0, CARD_ROWS[chart.form]);
   const hidden = chart.rows.length - rows.length;
   return (
     <div className="chart-card">
-      <h3>{chart.title}</h3>
+      <div className="chart-head">
+        <h3>{chart.title}</h3>
+        {chart.sortable && (
+          <div className="sort-by">
+            <span>Sort by</span>
+            <Dropdown
+              compact
+              ariaLabel="Sort by"
+              value={sort}
+              onChange={(value) => setSort(value as ChartSort)}
+              options={[
+                { value: "date", label: "Date" },
+                { value: "number", label: "Number" },
+              ]}
+            />
+          </div>
+        )}
+      </div>
       <div className="chart-body">
         {chart.rows.length === 0 ? (
           <p>No data</p>

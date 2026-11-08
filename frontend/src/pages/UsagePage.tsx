@@ -15,11 +15,11 @@ const useWord: Record<string, string> = {
   not_listed: "Not listed",
 };
 
-// The same results seen from the Finnish side: which frequency bands and which stations
-// are exposed, regardless of which notice causes it.
-export function UsagePage({ data }: { data: Assessment }) {
+export function UsagePage({ data, issueId }: { data: Assessment; issueId: string }) {
   const [allStations, setAllStations] = useState(false);
-  const usage = data.usage;
+  const issue = data.issues.find((i) => i.id === issueId);
+  const usage = data.usageByIssue?.[issueId];
+  const word = limitWord(issue?.kind ?? "Space");
 
   if (!usage || (usage.bands.length === 0 && usage.stations.length === 0)) {
     return (
@@ -41,11 +41,14 @@ export function UsagePage({ data }: { data: Assessment }) {
           <BackIcon />
           Back
         </button>
-        <h1>Impact on Finnish use</h1>
+        <h1>Impact on Finnish use in {issue?.label ?? issueId}</h1>
         <div className="actions">
           <button
             onClick={() => {
-              queueQuestion("Which Finnish frequency bands and stations are most affected?");
+              queueQuestion(
+                `Which Finnish frequency bands and stations are most affected in ${issue?.label ?? issueId}?`,
+                `issue:${issueId}`,
+              );
               go({ view: "chat" });
             }}
           >
@@ -69,14 +72,14 @@ export function UsagePage({ data }: { data: Assessment }) {
             <thead>
               <tr>
                 <th>Band</th>
-                <th>Kind</th>
-                <th>National use</th>
+                <th>Type</th>
+                <th>Finnish allocation in M4</th>
                 <th className="num">Stations</th>
                 <th className="num">Notices</th>
                 <th className="num">Cases</th>
                 <th>Worst margin</th>
-                <th>Worst notice</th>
-                <th>Rule</th>
+                <th>Notice with worst margin</th>
+                <th>Applicable limit</th>
               </tr>
             </thead>
             <tbody>
@@ -114,7 +117,7 @@ export function UsagePage({ data }: { data: Assessment }) {
                 <th className="num">Notices</th>
                 <th className="num">Cases</th>
                 <th>Worst margin</th>
-                <th>Worst notice</th>
+                <th>Notice with worst margin</th>
               </tr>
             </thead>
             <tbody>
@@ -126,7 +129,7 @@ export function UsagePage({ data }: { data: Assessment }) {
                   <td>{s.bands.join(", ")}</td>
                   <td className="num">{count(s.notices)}</td>
                   <td className="num">{count(s.cases)}</td>
-                  <td>{margin(s.worstMarginDb)}</td>
+                  <td>{margin(s.worstMarginDb, word)}</td>
                   <td>{s.worstNoticeKey && <Ref to={noticeRef(s.worstNoticeKey)}>{s.worstNoticeName}</Ref>}</td>
                 </tr>
               ))}

@@ -32,7 +32,6 @@ def load(connection, prepared):
             tables = [("Frequencies of interest", extraction)] if is_workbook else list(extraction["tables"].items())
             for table_name, metadata in tables:
                 source = checked_path(destination, metadata["output"])
-                # Replace only the imported table within this transaction so reruns are idempotent.
                 if is_workbook:
                     connection.execute("DELETE FROM ingestion.stations WHERE dataset_id=%s", (dataset["dataset_id"],))
                 connection.execute("DELETE FROM ingestion.source_rows WHERE dataset_id=%s AND source_table=%s",

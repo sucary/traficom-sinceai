@@ -1,5 +1,3 @@
-"""ECC T/R 25-08 A.1.2.3 coordination thresholds."""
-
 from __future__ import annotations
 
 import math
@@ -24,7 +22,6 @@ CRITERION = {
 
 
 def base_threshold_dbuv_m(frequency_mhz: float) -> float:
-    """Return the A.1.2.3 co-channel threshold for the challenge scope."""
     if not math.isfinite(frequency_mhz) or frequency_mhz < 29.7:
         raise ValueError("T/R 25-08 challenge criterion starts at 29.7 MHz")
     if frequency_mhz < 47:
@@ -43,7 +40,6 @@ def threshold_dbuv_m(
     channel_spacing_hz: float | None = None,
     uniform_spectral_power: bool = False,
 ) -> tuple[float, float]:
-    """Return threshold and any explicitly justified bandwidth correction."""
     base = base_threshold_dbuv_m(frequency_mhz)
     correction = 0.0
     if uniform_spectral_power and channel_spacing_hz is not None and channel_spacing_hz > 25_000:

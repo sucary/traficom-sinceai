@@ -36,7 +36,6 @@ def extract_workbook(path, destination, dataset_id):
                 references = re.fullmatch(r"=([A-Z]+\d+)(?:\+([A-Z]+\d+))?", value)
                 if not references:
                     raise ValueError(f"Unsupported formula at row {row_number}: {value}")
-                # Evaluate the workbook's references independently; never execute formula text as code.
                 left = cached_sheet[references[1]].value
                 expected = left if references[2] is None else number(left) + number(cached_sheet[references[2]].value)
                 if cached_values[index] is None or expected != cached_values[index]:

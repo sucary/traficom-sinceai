@@ -1,5 +1,3 @@
-"""Assemble and validate inputs for later PFD calculations without calculating PFD."""
-
 import csv
 import hashlib
 import json
@@ -124,7 +122,6 @@ def build_frequency_profile(dataset_id, frequency_row, groups, emissions_by_grou
             "provision": group_raw.get("prov"), "frequency_min_mhz_source": group_raw.get("freq_min"),
             "frequency_max_mhz_source": group_raw.get("freq_max"), "bandwidth_khz_source": group_raw.get("bdwdth"),
         },
-        # srv_cls.stn_cls codes of the group (ITU Preface Table 3); None when srv_cls was not extracted.
         "station_classes": None if station_classes is None else sorted(set(station_classes.get(group_id, []))),
         "emission_linkage": emission_linkage,
         "emissions": [{

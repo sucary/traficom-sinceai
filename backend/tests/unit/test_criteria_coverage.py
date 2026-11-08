@@ -17,7 +17,6 @@ def case(segments, bands, notice_type="G", center=2_250_000_000, width=2_000_000
 
 class CoverageTests(unittest.TestCase):
     def test_wide_satellite_band_is_judged_at_the_finnish_frequency_only(self):
-        # Satellite band spans 1.6-2.3 GHz; the Finnish band at 1.8 GHz has no Table 21-4 row.
         wide = case([(1_799_000_000, 1_801_000_000)], [(1_600_000_000, 2_300_000_000)], center=1_800_000_000)
         self.assertEqual(case_coverage(wide, load_criteria())["coverage"], "no_criterion")
 

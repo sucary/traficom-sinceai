@@ -58,9 +58,7 @@ class EqualRightsTests(unittest.TestCase):
                          ["explicitly_applicable"])
 
     def test_earth_to_space_only_allocation_does_not_count(self):
-        # 2 025-2 110 MHz: space research is Earth-to-space/space-to-space only; space-to-space counts.
         self.assertEqual(results("T21-4-1525-2300-METSAT-SR-SO-EESS", {"SR"}, 2050 * M, 2060 * M), ["equal_rights"])
-        # 1 670-1 675 MHz: mobile-satellite is Earth-to-space only, so an MSS space station has no allocation.
         self.assertEqual(results("T21-4-1525-2300-METSAT-SR-SO-EESS", {"METSAT"}, 1671 * M, 1672 * M), ["equal_rights"])
         allocations = article5_assessment(criterion_by_id("T21-4-2500-2690-FSS-BSS-RDSS-MSS"), {"MSS"}, 2505 * M, 2506 * M)
         self.assertEqual([r["result"] for r in allocations], ["service_not_allocated"])

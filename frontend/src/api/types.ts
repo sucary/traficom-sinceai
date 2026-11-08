@@ -1,20 +1,6 @@
-// Contract between the UI and the assessment backend.
-// See docs/FRONTEND_API.md for the HTTP form of every call.
 
 import type { Assessment } from "../data";
 
-/**
- * A reference to something the UI can open. Used in links inside any text
- * (chat answers, notifications, letters) and in navigation actions.
- *
- *   notice:<issueId>:<noticeId>     a notice of concern, e.g. notice:ific3074:124545403
- *   administration:<code>           e.g. administration:CHN
- *   station:<stationNumber>         a Finnish station, e.g. station:989011
- *   issue:<issueId>                 e.g. issue:ific3074
- *   letter:notice:<issueId>:<id>    draft letter for one notice
- *   letter:administration:<code>    draft letter for one administration
- *   chat:<conversationId>           a saved conversation
- */
 export type EntityRef = string;
 
 export interface Reference {
@@ -22,12 +8,10 @@ export interface Reference {
   label: string;
 }
 
-/** One reasoning step the assistant shows before or while answering. */
 export interface ReasoningStep {
-  text: string; // may contain [label](ref) links
+  text: string;
 }
 
-/** Something the assistant proposes the user opens next. */
 export interface ChatAction {
   label: string;
   ref: EntityRef;
@@ -36,10 +20,8 @@ export interface ChatAction {
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
-  /** Markdown subset: paragraphs, "- " lists, **bold**, [label](ref) links. */
   content: string;
   reasoning?: ReasoningStep[];
-  /** The model's own thinking, streamed before or alongside the answer; shown collapsed. */
   thinking?: string;
   references?: Reference[];
   actions?: ChatAction[];
@@ -55,30 +37,25 @@ export interface Conversation {
   updatedAt: number;
 }
 
-/**
- * Events streamed by the chat endpoint, one JSON object per line (NDJSON).
- * The UI applies them in order to the assistant message being written.
- */
 export type ChatEvent =
-  | { type: "reasoning"; text: string } // legacy; no longer shown
-  | { type: "thinking"; text: string } // model thinking, appended to thinking
-  | { type: "text"; text: string } // appended to content
+  | { type: "reasoning"; text: string }
+  | { type: "thinking"; text: string }
+  | { type: "text"; text: string }
   | { type: "reference"; ref: EntityRef; label: string }
-  | { type: "action"; ref: EntityRef; label: string; auto?: boolean } // auto: open immediately
+  | { type: "action"; ref: EntityRef; label: string; auto?: boolean }
   | { type: "done" }
   | { type: "error"; message: string };
 
 export interface ChatRequest {
   conversationId: string;
   messages: { role: "user" | "assistant"; content: string }[];
-  /** What the user is looking at, so the assistant can resolve "this notice". */
   context?: { ref?: EntityRef; issueId?: string };
 }
 
 export interface Notification {
   id: string;
-  text: string; // may contain [label](ref) links
-  ref?: EntityRef; // where the whole notification leads
+  text: string;
+  ref?: EntityRef;
   createdAt?: string;
 }
 
@@ -87,12 +64,36 @@ export interface LetterRequest {
   key: string;
 }
 
+export interface UploadedFile {
+  file: string;
+  kind: "space" | "terrestrial";
+  issue: number;
+  originalName: string;
+  bytes: number;
+}
+
+export interface AnalysisJob {
+  id: string;
+  status: "running" | "completed" | "failed";
+  files: {
+    file: string;
+    kind: string;
+    issue: number;
+    status: "queued" | "running" | "completed" | "failed";
+    counts: Record<string, number> | null;
+    error: string | null;
+  }[];
+  exported: boolean;
+  error: string | null;
+}
+
 export interface AssessmentApi {
-  /** Human readable name of the backend in use, shown nowhere, used for debugging. */
   readonly name: string;
   getAssessment(): Promise<Assessment>;
   getNotifications(): Promise<Notification[]>;
   draftLetter(req: LetterRequest): Promise<string>;
-  /** Streams answer events. Abort with the signal to stop generation. */
   chat(req: ChatRequest, onEvent: (e: ChatEvent) => void, signal: AbortSignal): Promise<void>;
+  uploadFile?(file: File, onProgress: (fraction: number) => void): Promise<UploadedFile>;
+  startAnalysis?(files: string[]): Promise<AnalysisJob>;
+  getAnalysis?(id: string): Promise<AnalysisJob>;
 }

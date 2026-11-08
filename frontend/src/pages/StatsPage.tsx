@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Assessment } from "../data";
-import { charts } from "../charts";
+import { charts, sortedRows } from "../charts";
 import { count } from "../format";
 import { Ref } from "../components/RichText";
 import { BackIcon } from "../components/Icons";
 import { Dropdown } from "../components/Dropdown";
 
-type Sort = "value" | "label" | "change";
+type Sort = "value" | "label" | "change" | "date";
 
 export function StatsPage({ data, id }: { data: Assessment; id: string }) {
   const chart = charts(data).find((c) => c.id === id);
@@ -25,9 +25,12 @@ export function StatsPage({ data, id }: { data: Assessment; id: string }) {
 
   const pairs = chart.form === "pairs";
   const change = (r: { value: number; previous?: number }) => r.value - (r.previous ?? 0);
-  const rows = [...chart.rows].sort((a, b) =>
-    sort === "label" ? a.label.localeCompare(b.label) : sort === "change" ? change(b) - change(a) : b.value - a.value,
-  );
+  const rows =
+    sort === "date"
+      ? sortedRows(chart, "date").reverse()
+      : [...chart.rows].sort((a, b) =>
+          sort === "label" ? a.label.localeCompare(b.label) : sort === "change" ? change(b) - change(a) : b.value - a.value,
+        );
   const max = Math.max(1, ...chart.rows.flatMap((r) => [r.value, r.previous ?? 0]));
   const total = chart.rows.reduce((s, r) => s + r.value, 0);
 
@@ -48,6 +51,7 @@ export function StatsPage({ data, id }: { data: Assessment; id: string }) {
               { value: "value", label: `Sort by ${chart.valueLabel}` },
               { value: "label", label: "Sort by name" },
               ...(pairs ? [{ value: "change", label: "Sort by change" }] : []),
+              ...(chart.sortable ? [{ value: "date", label: "Sort by date" }] : []),
             ]}
           />
         </div>
@@ -62,8 +66,8 @@ export function StatsPage({ data, id }: { data: Assessment; id: string }) {
                 {pairs && <th className="num">{chart.previousLabel}</th>}
                 <th className="num">{chart.valueLabel}</th>
                 {pairs && <th className="num">Change</th>}
-                {!pairs && <th className="num">Share</th>}
-                <th className="bar-col">Distribution</th>
+                {!pairs && <th className="num">Share of total</th>}
+                <th className="bar-col">Comparison</th>
               </tr>
             </thead>
             <tbody>

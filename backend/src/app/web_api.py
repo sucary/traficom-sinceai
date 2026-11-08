@@ -1,5 +1,3 @@
-"""HTTP API for the assessment frontend."""
-
 import json
 import os
 from pathlib import Path
@@ -8,18 +6,17 @@ import subprocess
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import requests
 from dotenv import load_dotenv
 
+from .analysis_jobs import Jobs, receive_upload
 from .config import PROJECT_ROOT
 
 
 ASSESSMENT_PATH = PROJECT_ROOT / "frontend" / "public" / "data" / "assessment.json"
 EXPORT_SCRIPT = PROJECT_ROOT / "backend" / "scripts" / "export_frontend_data.py"
-# Local development only: the Vite dev/preview server on any port (it moves to 5174, 5175, ...
-# when 5173 is taken). Other origins get no CORS header.
 LOCAL_ORIGIN = re.compile(r"^http://(localhost|127\.0\.0\.1):\d{1,5}$")
 
 
@@ -117,8 +114,90 @@ def draft_letter(data, scope, key):
     )
 
 
+SPACE_WORDS = ("satellite", "space", "pfd", "table 21-4", "gso", "orbit")
+SPACE_ISSUE = re.compile(r"(?<!br )(?<!br)\bific ?\d{4}")
+TERRESTRIAL_WORDS = ("terrestrial", "land mobile", "land-mobile", "border", "field strength", "t/r 25-08",
+                     "p.1546", "brific", "br ific")
+TREND_WORDS = ("trend", "anomal", "activity", "neighbour", "neighbor", "changed", "new filings", "over time")
+FRAMEWORK_WORDS = ("rule", "regulation", "framework", "provision", "legal", "article", "m4")
+
+
+def _issue_number(issue):
+    digits = re.sub(r"\D", "", issue.get("id", ""))
+    return int(digits) if digits else 0
+
+
+def route_request(data, request_body):
+    issues = data.get("issues", [])
+    kinds = {"Space": "space", "Terrestrial": "terrestrial"}
+    query = request_body["messages"][-1]["content"].lower()
+    ref = (request_body.get("context") or {}).get("ref", "") or ""
+
+    context_issue = None
+    if ref.startswith("issue:"):
+        context_issue = ref.split(":", 1)[1]
+    elif ref.startswith("notice:"):
+        context_issue = ref[len("notice:"):].split(":", 1)[0]
+
+    named = [i for i in issues if str(_issue_number(i)) in re.findall(r"\b\d{4}\b", query)]
+    space = any(word in query for word in SPACE_WORDS) or bool(SPACE_ISSUE.search(query))
+    terrestrial = any(word in query for word in TERRESTRIAL_WORDS)
+    wants_trends = any(word in query for word in TREND_WORDS)
+    wants_framework = any(word in query for word in FRAMEWORK_WORDS)
+
+    if context_issue and any(i["id"] == context_issue for i in issues):
+        selected = [i for i in issues if i["id"] == context_issue]
+        reason = "the issue of the page the question was asked from"
+    elif named:
+        selected = named
+        reason = "the issue named in the question"
+    else:
+        domains = [k for k, flag in (("Space", space), ("Terrestrial", terrestrial)) if flag] or list(kinds)
+        pool = [i for i in issues if i.get("kind") in domains]
+        if wants_trends:
+            selected = pool
+            reason = "all issues, for a trend question"
+        else:
+            selected = [max((i for i in pool if i.get("kind") == k), key=_issue_number)
+                        for k in domains if any(i.get("kind") == k for i in pool)]
+            reason = "the latest issue of each selected domain"
+    reasons = [reason]
+    named_ids = set(re.findall(r"\b\d{6,}\b", query))
+    notice_issues = {n.get("issueId") for n in data.get("notices", []) if str(n.get("noticeId")) in named_ids}
+    for issue in issues:
+        if issue["id"] in notice_issues and issue not in selected:
+            selected.append(issue)
+            reasons.append(f"{issue.get('label', issue['id'])} for the notice named in the question")
+    for kind, flag in (("Space", space), ("Terrestrial", terrestrial)):
+        if flag and not any(i.get("kind") == kind for i in selected):
+            candidates = [i for i in issues if i.get("kind") == kind]
+            if candidates:
+                latest = max(candidates, key=_issue_number)
+                selected.append(latest)
+                reasons.append(f"{latest.get('label', latest['id'])} as the latest {kind.lower()} issue the question asks about")
+    reason = "; ".join(reasons)
+    ids = [i["id"] for i in selected]
+    labels = ", ".join(f"{i.get('label', i['id'])} ({i.get('kind', '')})" for i in selected)
+    return {
+        "issue_ids": ids,
+        "wants_trends": wants_trends,
+        "wants_framework": wants_framework,
+        "frameworks": {i.get("label", i["id"]): i["regulatoryFramework"]
+                       for i in issues if i.get("regulatoryFramework")},
+        "note": f"Scope: {labels or 'no issue'}, selected as {reason}. Mention this scope when it matters, and "
+                "keep space and terrestrial results in separate tables.",
+    }
+
+
+def scoped_data(data, scope):
+    ids = set(scope["issue_ids"])
+    return {**data,
+            "notices": [n for n in data.get("notices", []) if n.get("issueId") in ids],
+            "issues": [i for i in data.get("issues", []) if i.get("id") in ids],
+            "trends": [t for t in data.get("trends", []) if t.get("issueId") in ids]}
+
+
 def _notices_for_request(data, request_body):
-    """All notices matching the request, in priority order (no cap)."""
     notices = data["notices"]
     context_ref = (request_body.get("context") or {}).get("ref", "")
     if context_ref.startswith("notice:"):
@@ -153,12 +232,6 @@ def _notices_for_request(data, request_body):
 
 
 def _chat_evidence(notice, definitions=None):
-    """Case-specific evidence for the model.
-
-    ``worst_case`` holds the values and the caveats that apply to that exact case.
-    Caveats seen only on other cases of the notice are kept in a separate, explicitly
-    labelled list so they cannot be read as applying to the worst case.
-    """
     definitions = definitions or {}
     return {
         "notice": {
@@ -170,6 +243,7 @@ def _chat_evidence(notice, definitions=None):
             "administration": notice["administrationName"],
             "name": notice["name"],
             "provision": notice.get("provision"),
+            "response_deadline": notice.get("responseDeadline"),
             "cases_of_concern": notice.get("casesOfConcern"),
             "cases_of_concern_means": definitions.get("casesOfConcern"),
             "stations_affected": notice.get("stationsAffected"),
@@ -207,31 +281,39 @@ SYSTEM_PROMPT = (
     "of the supplied notices, say how many of how many you list. Cite the supplied rule and page "
     "where available. When referring to notices, include their notice or assignment ID. The supplied "
     "records are notices of concern only, not every notice in the data: call them notices of concern, "
-    "and use issue_funnels for totals such as how many notices were published, matched or calculated.\n\n"
-    "Formatting (the UI renders this Markdown subset: paragraphs, #### headings, '- ' and '1. ' lists, "
-    "tables, **bold**, [label](ref) links):\n"
-    "- Start with one or two sentences that answer the question directly.\n"
-    "- When two or more notices are compared or listed, use a table, one row per notice, in priority "
-    "order, with these columns: Notice, Administration, Margin, Value vs limit, Band, Cases (stations), "
-    "Rule. Keep cells short: margin as '42.94 dB over'; value vs limit as '-95.06 vs -138.0 dB(W/m²) in "
-    "1 MHz'; cases as '365 (358)'; rule as the rule_id with its printed page.\n"
-    "- Link every notice as [name notice_id](notice:<key>), using the record's key.\n"
-    "- Put caveats after the table as a short '- ' list, each naming the notices it applies to; state "
-    "caveats shared by all listed notices once.\n"
-    "- For a single notice, use a short list of facts instead of a table.\n"
-    "- Be concise. Do not use em dashes or separator hyphens, and use vertical bars only inside tables."
+    "and use issue_funnels for totals such as how many notices were published, matched or calculated. "
+    "A notice's response_deadline is the last day Finland can comment (RR No. 9.3, advance publication) or "
+    "state disagreement (RR No. 9.52, coordination request): four months after the IFIC publication date; "
+    "notifications (No. 11.2) have none. "
+    "The terrestrial threshold is this assessment's screening criterion (T/R 25-08, extended above 470 MHz "
+    "per the challenge Q&A); do not present it as the coordination rule other bands or systems are bound by.\n\n"
+    "How to answer: write like an experienced colleague, not a report generator. Let the question decide "
+    "the shape and length of the answer.\n"
+    "- Answer the question in the first sentence. A simple question gets a short answer, often a few "
+    "sentences with no headings or lists.\n"
+    "- Use a table only when it genuinely helps, such as comparing several notices; choose only the "
+    "columns the question needs. Use lists for a handful of separate facts, prose otherwise.\n"
+    "- Mention only the caveats and limitations that matter for this answer, briefly and where they "
+    "apply. Do not repeat the standard assumptions every time, but always make clear that an exceedance "
+    "is a reason for review, not proof of interference, when the answer is about risk or interference.\n"
+    "- Mention the scope or funnel totals only when they help the answer, for example when asked about an "
+    "issue, about totals, or when the scope might surprise the user.\n"
+    "- In a follow-up, do not repeat what was already said; build on it.\n"
+    "- Link notices as [name notice_id](notice:<key>), using the record's key.\n"
+    "- A margin is the difference from the limit or threshold, never the PFD or field-strength value itself; "
+    "take it from the margin fields. Terrestrial results have a threshold, space results a limit.\n"
+    "- Never write a margin as a signed number: say '42.94 dB over the limit' or '4.46 dB below the "
+    "threshold', so its direction is unmistakable.\n"
+    "- Describe notices only with attributes the records give (do not infer a service or system type).\n"
+    "- When nothing in the evidence matches the question, say so briefly, say what the evidence does not "
+    "cover, and stop. Do not guess whether unsupplied records exist or what happened to them, and do not "
+    "pad the answer with items that do not actually match (for example a different frequency range).\n"
+    "Markdown the UI renders: paragraphs, #### headings, '- ' and '1. ' lists, tables, **bold**, "
+    "[label](ref) links. Do not use em dashes, and use vertical bars only inside tables."
 )
 
 
 def compact_evidence(records):
-    """Lossless de-duplication of chat evidence to keep the prompt small.
-
-    Per kind of notice (Space, Terrestrial), text repeated in every record of that kind is
-    stated once in ``shared_by_kind``: the assumptions and the caveats common to every worst
-    case. Each rule's text and citation is given once in ``rules`` and records refer to it
-    by ``rule_id``. Each record keeps only its own additional caveats, and its assumptions
-    only if they differ from its kind's shared list.
-    """
     by_kind = {}
     for record in records:
         by_kind.setdefault(record["notice"]["kind"], []).append(record["worst_case"])
@@ -259,13 +341,14 @@ def compact_evidence(records):
     return {"shared_by_kind": shared, "rules": rules, "records": compact}
 
 
-def _model_messages(data, request_body, notices):
+def _model_messages(data, request_body, notices, scope=None):
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(request_body["messages"][-12:])
     evidence = compact_evidence([_chat_evidence(n, data.get("countDefinitions")) for n in notices])
     messages.append({
         "role": "system",
-        "content": "issue_funnels (notice counts per stage for each issue): "
+        "content": (scope["note"] + "\n" if scope else "")
+                   + "issue_funnels (notice counts per stage for each issue): "
                    + json.dumps({i.get("label", i.get("id")): i.get("funnel", []) for i in data.get("issues", [])},
                                 ensure_ascii=False, separators=(",", ":"))
                    + f"\nThese {len(notices)} record(s) are all notices of concern that match the request, in priority order. "
@@ -280,11 +363,30 @@ def _model_messages(data, request_body, notices):
     if usage:
         messages.append({
             "role": "system",
-            "content": "Finnish usage view of the same results (regrouped per Finnish frequency band and per "
-                       "Finnish station; authoritative, do not recompute). Bands are complete; stations are the "
-                       f"{len(usage['stations'])} most affected of {usage['stationsTotal']}, say so when listing them:\n"
+            "content": "Finnish usage view of the same results per issue (regrouped per Finnish frequency band "
+                       "and per Finnish station; authoritative, do not recompute; keep issues separate). Bands are "
+                       "complete; stations are the most affected, up to "
+                       f"{USAGE_STATIONS_IN_CONTEXT}, of stationsTotal; say so when listing them:\n"
                        + json.dumps(usage, ensure_ascii=False, separators=(",", ":")),
         })
+    if scope:
+        if scope.get("wants_trends") and data.get("trends"):
+            messages.append({
+                "role": "system",
+                "content": "Neighbour activity trends and anomaly flags (terrestrial; authoritative). These are "
+                           "activity signals about other administrations' notices, not interference findings: "
+                           "keep them apart from notices of concern and do not call them risks. Summarise the notable "
+                           "ones rather than listing every flag, unless asked for all, and give the reason for those "
+                           "you mention:\n"
+                           + json.dumps(data["trends"], ensure_ascii=False, separators=(",", ":")),
+            })
+        frameworks = scope.get("frameworks") or {}
+        if scope.get("wants_framework") and frameworks:
+            messages.append({
+                "role": "system",
+                "content": "Regulatory framework per issue (cite provision and page as supplied):\n"
+                           + json.dumps(frameworks, ensure_ascii=False, separators=(",", ":")),
+            })
     return messages
 
 
@@ -294,23 +396,26 @@ USAGE_STATIONS_IN_CONTEXT = 30
 
 
 def wants_usage_view(request_body):
-    """Station, band or Finnish-usage questions also get the usage view."""
     ref = (request_body.get("context") or {}).get("ref", "")
     query = request_body["messages"][-1]["content"].lower()
     return ref.startswith("station:") or any(word in query for word in USAGE_WORDS)
 
 
 def usage_summary(data):
-    usage = data.get("usage") or {}
-    stations = usage.get("stations", [])
-    if not usage.get("bands") and not stations:
-        return None
-    return {
-        "definitions": usage.get("definitions", {}),
-        "bands": usage.get("bands", []),
-        "stations": stations[:USAGE_STATIONS_IN_CONTEXT],
-        "stationsTotal": len(stations),
-    }
+    by_issue = data.get("usageByIssue") or {}
+    out = {}
+    for issue in data.get("issues", []):
+        usage = by_issue.get(issue["id"]) or {}
+        stations = usage.get("stations", [])
+        if not usage.get("bands") and not stations:
+            continue
+        out[issue.get("label", issue["id"])] = {
+            "definitions": usage.get("definitions", {}),
+            "bands": usage.get("bands", []),
+            "stations": stations[:USAGE_STATIONS_IN_CONTEXT],
+            "stationsTotal": len(stations),
+        }
+    return out or None
 
 
 MODEL_RETRIES = 2
@@ -319,7 +424,6 @@ MAX_RETRY_WAIT_S = 60
 
 
 def retry_delay_seconds(response):
-    """Seconds to wait before retrying: Retry-After header, else 'after N s' in the body, else 10."""
     header = (response.headers or {}).get("Retry-After") if response is not None else None
     match = None
     if header and str(header).strip().isdigit():
@@ -331,11 +435,6 @@ def retry_delay_seconds(response):
 
 
 def _stream_completion(messages, api_url, api_key, model):
-    """Yield ("thinking", text) and ("text", text) pieces as the model streams them.
-
-    Uses the OpenAI-compatible server-sent events format (``stream: true``). Thinking comes
-    from ``reasoning_content`` or ``reasoning`` deltas when the model provides them.
-    """
     for attempt in range(MODEL_RETRIES + 1):
         try:
             response = requests.post(
@@ -361,8 +460,6 @@ def _stream_completion(messages, api_url, api_key, model):
                 detail = f" HTTP {status}: {detail}"
             raise RuntimeError(f"Model request failed.{detail}") from error
     received = False
-    # Server-sent events are UTF-8 (WHATWG spec). Without a charset in Content-Type,
-    # requests would assume ISO-8859-1 and garble characters such as "²" into "Â²".
     response.encoding = "utf-8"
     try:
         for raw in response.iter_lines(decode_unicode=True):
@@ -401,10 +498,12 @@ def _chat_events(data, request_body):
         yield {"type": "error", "message": "Configure OPENCODE_API_URL and OPENCODE_API_KEY on the backend."}
         return
 
+    scope = route_request(data, request_body)
+    data = scoped_data(data, scope)
     notices = _notices_for_request(data, request_body)
     answer = ""
     try:
-        for kind, piece in _stream_completion(_model_messages(data, request_body, notices), api_url, api_key, model):
+        for kind, piece in _stream_completion(_model_messages(data, request_body, notices, scope), api_url, api_key, model):
             if kind == "text":
                 answer += piece
             yield {"type": kind, "text": piece}
@@ -412,7 +511,6 @@ def _chat_events(data, request_body):
         yield {"type": "error", "message": str(error)}
         return
 
-    # Sources: the notices the answer actually names (by ID), else the first one supplied.
     mentioned = [n for n in notices if re.search(rf"(?<!\d){re.escape(n['noticeId'])}(?!\d)", answer)]
     notices = mentioned or notices[:1]
 
@@ -469,6 +567,9 @@ def _validate_chat_request(body):
         raise ValueError("context must be an object")
 
 
+JOBS = Jobs()
+
+
 class _Server(ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
@@ -520,6 +621,10 @@ def make_handler(assessment_path=ASSESSMENT_PATH):
             if path == "/api/health":
                 self._json(200, {"status": "ok"})
                 return
+            if path.startswith("/api/analyses/"):
+                job = JOBS.get(path.rsplit("/", 1)[1])
+                self._json(200 if job else 404, job or {"error": "Not found"})
+                return
             if path not in {"/api/assessment", "/api/notifications"}:
                 self._json(404, {"error": "Not found"})
                 return
@@ -531,7 +636,30 @@ def make_handler(assessment_path=ASSESSMENT_PATH):
                 self._json(503, {"error": str(error)})
 
         def do_POST(self):
-            path = urlsplit(self.path).path
+            parts = urlsplit(self.path)
+            path = parts.path
+            if path == "/api/uploads":
+                try:
+                    name = (parse_qs(parts.query).get("name") or [""])[0]
+                    length = int(self.headers.get("Content-Length", "0"))
+                    self._json(200, receive_upload(self.rfile, length, name))
+                except ValueError as error:
+                    self._json(400, {"error": str(error)})
+                except OSError as error:
+                    self._json(503, {"error": f"The file could not be stored: {error}"})
+                return
+            if path == "/api/analyses":
+                try:
+                    body = self._read_json()
+                    files = body.get("files") if isinstance(body, dict) else None
+                    if not isinstance(files, list):
+                        raise ValueError("files must be a list of file names")
+                    self._json(202, JOBS.start(files))
+                except ValueError as error:
+                    self._json(400, {"error": str(error)})
+                except RuntimeError as error:
+                    self._json(409, {"error": str(error)})
+                return
             if path not in {"/api/letters", "/api/chat"}:
                 self._json(404, {"error": "Not found"})
                 return
@@ -564,7 +692,6 @@ def make_handler(assessment_path=ASSESSMENT_PATH):
 
 
 def serve(host="127.0.0.1", port=8000, export=True):
-    # Model settings may live in the project root or in backend/ (root wins if both set a value).
     load_dotenv(PROJECT_ROOT / ".env")
     load_dotenv(PROJECT_ROOT / "backend" / ".env")
     if export:

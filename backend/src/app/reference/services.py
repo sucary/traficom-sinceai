@@ -1,17 +1,9 @@
-"""Decide whether a satellite group's service matches the services of a Table 21-4 row.
-
-Rows name services in prose ("Fixed-satellite (space-to-Earth)"); groups carry ITU
-station-class codes (srv_cls.stn_cls, e.g. "EC"). Both are mapped to service tokens
-from ``station_classes.json`` (ITU BR IFIC Preface, Section IV, Table 3).
-"""
-
 from functools import lru_cache
 import json
 from pathlib import Path
 
 
 CLASSES_PATH = Path(__file__).with_name("station_classes.json")
-# Most specific prefixes first.
 _SERVICE_PREFIXES = (
     ("Mobile-satellite (except aeronautical", "MSS_EXCEPT_AERO"),
     ("Earth exploration-satellite (active)", "EESS_ACTIVE"),
@@ -44,11 +36,6 @@ def criterion_tokens(criterion):
 
 
 def service_match(station_classes, tokens, document=None):
-    """Return "match", "ambiguous", "no_match" or "unknown" for one group.
-
-    ``station_classes`` is the list of srv_cls codes of the group; None or empty means
-    the service is not known.
-    """
     if not station_classes:
         return "unknown"
     classes = (document or load_station_classes())["classes"]
@@ -56,7 +43,7 @@ def service_match(station_classes, tokens, document=None):
     for code in station_classes:
         entry = classes.get(code)
         if entry is None:
-            unknown = True  # earth-station or unlisted code
+            unknown = True
             continue
         if tokens & set(entry["tokens"]):
             return "match"

@@ -8,6 +8,7 @@ import { NoticeList } from "./components/NoticeList";
 import { NoticeDetail } from "./components/NoticeDetail";
 import { Letter } from "./components/Letter";
 import { Trends } from "./components/Trends";
+import { NeighbourActivity } from "./components/NeighbourActivity";
 import { ChatPage } from "./pages/ChatPage";
 import { StationPage } from "./pages/StationPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
@@ -24,10 +25,10 @@ function Home({ data, issueId: requested }: { data: Assessment; issueId?: string
   const [issueId, setIssueId] = useState(valid(requested) ? requested! : data.issues[0]?.id ?? "");
   useEffect(() => {
     if (valid(requested)) setIssueId(requested!);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requested]);
 
   const issue = data.issues.find((i) => i.id === issueId);
+  const neighbourTrend = data.trends.find((t) => t.issueId === issueId && t.neighbourActivity);
   const notices = data.notices.filter((n) => n.issueId === issueId);
   return (
     <div className="page">
@@ -52,6 +53,7 @@ function Home({ data, issueId: requested }: { data: Assessment; issueId?: string
           full={{ view: "notices", scope: "issue", key: issueId }}
         />
       </section>
+      {neighbourTrend && <NeighbourActivity trend={neighbourTrend} />}
       <section>
         <h2>Trends across issues</h2>
         <Trends data={data} />
@@ -77,7 +79,6 @@ export function App() {
 
   let body = null;
   if (route.view === "chat") {
-    // The chat sidebar spans the full height, so the header lives inside the chat column.
     body = <ChatPage conversationId={route.conversationId} header={<TopBar route={route} embedded />} />;
   } else if (failed) {
     body = (
@@ -111,7 +112,7 @@ export function App() {
         body = <NoticesPage data={data} scope={route.scope} keyValue={route.key} />;
         break;
       case "usage":
-        body = <UsagePage data={data} />;
+        body = <UsagePage data={data} issueId={route.issueId} />;
         break;
       case "cases": {
         const n = findNotice(data, route.key);

@@ -4,12 +4,19 @@ import type { Notification } from "../api/types";
 import { refToRoute } from "../links";
 import { Route, go, href } from "../router";
 import { InlineText } from "./RichText";
+import { UploadPanel } from "./UploadPanel";
+import { uploadsAvailable, useUploads } from "../uploadStore";
 
 export function TopBar({ route, embedded = false }: { route: Route; embedded?: boolean }) {
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [read, setRead] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const uploadRef = useRef<HTMLDivElement>(null);
+  const uploads = useUploads();
+  const working = uploads.phase === "uploading" || uploads.phase === "analysing";
+  const failed = uploads.phase === "done" && (!!uploads.jobError || uploads.items.some((i) => i.status === "failed"));
   const unread = items.filter((n) => !read.has(n.id)).length;
 
   useEffect(() => {
@@ -30,8 +37,24 @@ export function TopBar({ route, embedded = false }: { route: Route; embedded?: b
     };
   }, [open]);
 
-  // Following any link inside the panel closes it.
-  useEffect(() => setOpen(false), [route]);
+  useEffect(() => {
+    if (!uploadOpen) return;
+    const close = (e: MouseEvent) => {
+      if (uploadRef.current && !uploadRef.current.contains(e.target as Node)) setUploadOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setUploadOpen(false);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [uploadOpen]);
+
+  useEffect(() => {
+    setOpen(false);
+    setUploadOpen(false);
+  }, [route]);
 
   const inChat = route.view === "chat";
   const inUsage = route.view === "usage";
@@ -44,9 +67,18 @@ export function TopBar({ route, embedded = false }: { route: Route; embedded?: b
             Overview
           </a>
           <a href={href({ view: "chat" })} aria-current={inChat ? "page" : undefined}>
-            Chat
+            Ask
           </a>
         </nav>
+        <div className="topbar-actions">
+        {uploadsAvailable() && (
+          <div className="notify" ref={uploadRef}>
+            <button className="plain" aria-expanded={uploadOpen} onClick={() => setUploadOpen(!uploadOpen)}>
+              {working ? "Analysing" : failed ? "Analysis failed" : uploads.phase === "done" ? "Analysis done" : "Upload"}
+            </button>
+            {uploadOpen && <UploadPanel />}
+          </div>
+        )}
         <div className="notify" ref={ref}>
           <button className="plain" aria-expanded={open} onClick={() => setOpen(!open)}>
             Notifications
@@ -81,6 +113,7 @@ export function TopBar({ route, embedded = false }: { route: Route; embedded?: b
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>

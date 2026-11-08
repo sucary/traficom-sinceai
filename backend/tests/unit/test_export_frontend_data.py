@@ -1,11 +1,3 @@
-"""Regression tests: notice exports must keep caveats case-specific.
-
-Modelled on two real IFIC 3074 errors. The CSN-SSO worst case (3.5 GHz fixed-satellite,
-equal rights) was described with RR No. 4.4 non-allocation that only applied to its
-2.5 GHz mobile-satellite cases. The RGS-N 4 kHz worst case was described with the
-4 kHz-to-1 MHz scaling caveat that only applied to other cases.
-"""
-
 import importlib.util
 import json
 from pathlib import Path
@@ -53,14 +45,11 @@ class CaseSpecificCaveatTests(unittest.TestCase):
         folder = Path(cls.temporary.name) / "ific9999"
         (folder / "pfd-calculations").mkdir(parents=True)
         records = [
-            # CSN-SSO pattern: worst case has only the scaling caveat; other cases are RR 4.4.
             case("csn-worst", 1, "100", "exceeds_limit", -42.94, "FSS-NGSO", [SCALING]),
             case("csn-mss-1", 1, "101", "unallocated_service_rr_4_4", None, None, []),
             case("csn-mss-2", 1, "102", "unallocated_service_rr_4_4", None, None, []),
-            # RGS-N pattern: 4 kHz worst case without caveats; another case carries the scaling caveat.
             case("rgs-worst", 2, "200", "exceeds_limit", -21.43, "FSS-4KHZ", [], bandwidth=4000),
             case("rgs-other", 2, "201", "near_limit", 1.0, "FSS-1MHZ", [SCALING]),
-            # Worst case whose other rows are RR 4.4: flagged, but not as a headline caveat.
             case("mixed-worst", 3, "300", "exceeds_limit", -5.0, "FSS-NGSO", [], rr44=True),
         ]
         (folder / "pfd-calculations" / "case_pfd_results.jsonl").write_text(
@@ -138,7 +127,6 @@ class UsageViewTests(unittest.TestCase):
 
 
 class TerrestrialCaveatTests(unittest.TestCase):
-    """Regression: the above-470 MHz Q&A caveat was attached to 152 MHz assignments too."""
 
     def test_470_mhz_extension_caveat_only_above_470_mhz(self):
         with tempfile.TemporaryDirectory() as temporary:

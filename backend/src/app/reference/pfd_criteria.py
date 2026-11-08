@@ -1,13 +1,3 @@
-"""Look up space-station pfd criteria (RR Article 21, Table 21-4) for a satellite band.
-
-The criteria live in ``pfd_criteria.json`` next to this module. Each criterion holds
-piecewise formulas of the angle of arrival ``d`` (degrees) and, for some rows, the
-constellation parameters ``X`` (No. 21.16.6) or ``Y`` (No. 21.16.15). Formulas are
-parsed with a whitelist evaluator; nothing is passed to ``eval``.
-
-This module only selects and evaluates criteria. It does not compute pfd values.
-"""
-
 import ast
 from functools import lru_cache
 import json
@@ -70,7 +60,6 @@ def load_criteria(path=CRITERIA_PATH):
 
 
 def segment_at(criterion, elevation_deg):
-    """Return the segment covering the angle; boundaries belong to the lower segment."""
     if not 0 <= elevation_deg <= 90:
         raise ValueError("Angle of arrival must be within 0-90 degrees")
     for segment in criterion["segments"]:
@@ -80,11 +69,6 @@ def segment_at(criterion, elevation_deg):
 
 
 def limit_at(criterion, elevation_deg, **parameters):
-    """Evaluate a criterion at an angle of arrival.
-
-    Returns a dict with the value in dB(W/m2) per reference bandwidth, or with
-    ``value_db`` None and ``missing_parameters`` when X or Y is needed but unknown.
-    """
     segment = segment_at(criterion, elevation_deg)
     needed = formula_variables(segment["formula"]) - {"d"}
     missing = sorted(name for name in needed if parameters.get(name) is None)
@@ -97,24 +81,12 @@ def limit_at(criterion, elevation_deg, **parameters):
 
 
 def _inside_band(lower, upper, band):
-    """True when the query shares spectrum with the band.
-
-    An emission that only touches a band edge (e.g. ends at exactly 2 500 MHz) is not in
-    that band: a positive-width query needs a positive-width overlap, and a single
-    frequency must lie strictly inside the band.
-    """
     if lower == upper:
         return band["frequency_min_hz"] < lower < band["frequency_max_hz"]
     return max(lower, band["frequency_min_hz"]) < min(upper, band["frequency_max_hz"])
 
 
 def criteria_for(frequency_min_hz, frequency_max_hz, orbit=None, finland_only=True, document=None):
-    """Return criteria whose bands intersect the closed satellite interval.
-
-    ``orbit`` is "gso", "non_gso" or None (unknown: both are returned). Each result
-    names the matched bands and whether the satellite band is fully inside them.
-    When nothing applies the result is an explicit ``no_criterion`` record.
-    """
     if orbit is not None and orbit not in ORBITS:
         raise ValueError(f"orbit must be one of {sorted(ORBITS)} or None")
     if frequency_min_hz > frequency_max_hz:

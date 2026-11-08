@@ -1,5 +1,3 @@
-// Independent cross-language validation of exported PFD calculations.
-// This script deliberately imports no production Python modules.
 
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -9,7 +7,6 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDir, "../..");
-// Optional argument: the issue output folder, e.g. output/ific3074 (the default).
 const issueDir = path.resolve(root, process.argv[2] ?? "output/ific3074");
 const resultsPath = path.join(issueDir, "pfd-calculations/case_pfd_results.jsonl");
 const criteriaPath = path.join(root, "backend/src/app/reference/pfd_criteria.json");
@@ -197,7 +194,6 @@ for await (const line of lines) {
     const independentlyClassified = result.worst_margin_db < 0
       ? "exceeds_limit"
       : result.worst_margin_db < 3 ? "near_limit" : "below_limit";
-    // Export rounding can put a value within 0.01 dB of a boundary; do not call that a disagreement.
     const nearBoundary = Math.abs(result.worst_margin_db) <= 0.011
       || Math.abs(result.worst_margin_db - 3) <= 0.011;
     if (!nearBoundary && independentlyClassified !== result.margin_class) {

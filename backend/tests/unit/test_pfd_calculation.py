@@ -29,9 +29,9 @@ class GeometryTests(unittest.TestCase):
         self.assertAlmostEqual(slant_range_km(0, 550), math.sqrt((EARTH_RADIUS_KM + 550) ** 2 - EARTH_RADIUS_KM ** 2))
 
     def test_max_elevation_limited_by_inclination(self):
-        self.assertEqual(max_elevation_deg(60, 97, 550), 90)  # sun-synchronous reaches 83° latitude
-        self.assertLess(max_elevation_deg(65, 53, 550), 30)   # 53° shell never overhead in Finland
-        self.assertLess(max_elevation_deg(68, 30, 550), 0)    # not visible at all
+        self.assertEqual(max_elevation_deg(60, 97, 550), 90)
+        self.assertLess(max_elevation_deg(65, 53, 550), 30)
+        self.assertLess(max_elevation_deg(68, 30, 550), 0)
 
 
 class EmissionTests(unittest.TestCase):
@@ -103,12 +103,10 @@ class CaseTests(unittest.TestCase):
         result = calculate_case(readiness(), notice, [profile()], BAND, 3.0, self.document)
         evaluation = next(e for e in result["evaluations"] if e["criterion_id"] == "T21-4-3400-4200-FSS-NGSO")
         self.assertEqual(evaluation["status"], "computed")
-        # Brute-force check of the reported minimum margin.
         eirp = min(-47.4 + 60, 13.1) + 22.6
         margins = [(-138 if a <= 5 else -138 + 12 * (a - 5) / 20 if a <= 25 else -126)
                    - (eirp - spreading_db(slant_range_km(a, altitude))) for a in [i / 10 for i in range(901)]]
         self.assertAlmostEqual(evaluation["margin_db"], min(margins), places=1)
-        # At medium-orbit altitude the stricter low-angle limit dominates over the shorter overhead distance.
         self.assertLessEqual(evaluation["worst_elevation_deg"], 5)
         self.assertGreater(evaluation["max_pfd_db"], evaluation["pfd_db"])
 
@@ -116,7 +114,6 @@ class CaseTests(unittest.TestCase):
         notice = {"notice_id": 3, "notice_object": "specific_earth_station"}
         result = calculate_case(readiness(), notice, [profile()], BAND, 3.0, self.document)
         self.assertEqual(result["result"]["status"], "not_space_station")
-
 
 
 NGSO_NOTICE = {"notice_id": 9, "notice_object": "non_geostationary_satellite_network", "geo_records": [],
@@ -174,7 +171,6 @@ class ReviewFeedbackTests(unittest.TestCase):
         self.assertEqual(quiet["result"]["status"], "special_method_required")
 
 
-
 def classed(station_classes, **kwargs):
     item = profile(**kwargs)
     item["station_classes"] = station_classes
@@ -215,7 +211,6 @@ class ServiceApplicabilityTests(unittest.TestCase):
         self.assertEqual(rows["T21-4-17.7-19.3-FSS-NGSO-X"], "applicable")
 
 
-
 class ParameterBoundTests(unittest.TestCase):
     document = load_criteria()
 
@@ -242,12 +237,10 @@ class ParameterBoundTests(unittest.TestCase):
         self.assertEqual(quiet["result"]["status"], "parameter_missing")
 
 
-
 class SharingConditionTests(unittest.TestCase):
     document = load_criteria()
 
     def test_sar_below_10_ghz_has_no_applicable_limit_in_finland(self):
-        # 9.9-10 GHz Region 1: fixed is secondary (5.477 does not list Finland) -> No. 21.16 not met.
         sar = readiness(segments=((9_950_000_000, 9_952_000_000),))
         result = calculate_case(sar, NGSO_NOTICE, [classed(["E3"], density=-20.0, peak=None, band=(9940.0, 9960.0))],
                                 BAND, 3.0, self.document)
@@ -257,7 +250,6 @@ class SharingConditionTests(unittest.TestCase):
         self.assertEqual(result["result"]["status"], "no_criterion")
 
     def test_unallocated_satellite_service_gets_rr_4_4_status(self):
-        # Mobile-satellite has no Region 1 allocation in 2 500-2 690 MHz.
         mss = readiness(segments=((2_600_000_000, 2_602_000_000),))
         result = calculate_case(mss, GSO_NOTICE, [classed(["EI"], band=(2590.0, 2610.0))], BAND, 3.0, self.document)
         self.assertEqual(result["result"]["status"], "unallocated_service_rr_4_4")

@@ -1,5 +1,3 @@
-"""Regulatory classification of consolidated frequency-overlap cases."""
-
 import csv
 import json
 from pathlib import Path
@@ -34,7 +32,6 @@ PUBLICATION_STAGES = {
 
 
 def classify_case(case):
-    """Return a classified copy without dropping or modifying evidence."""
     result = dict(case)
     space = case["space"]
     code_values = {

@@ -1,6 +1,3 @@
-// Renders text from the assistant, notifications or anywhere else.
-// Supports paragraphs, headings, "- " and "1. " lists, Markdown tables, **bold** and [label](ref) links, and links known
-// entity names (satellites, notices, administrations, stations, issues) automatically.
 import { ReactNode, useMemo } from "react";
 import { useData } from "../data";
 import { buildEntityIndex, entityMatcher, refHref } from "../links";
@@ -43,7 +40,7 @@ function autoLink(text: string, m: Matcher, key: string): ReactNode[] {
   if (!m) return [text];
   const out: ReactNode[] = [];
   let last = 0;
-  const re = new RegExp(m.re.source, "g"); // own instance: callers may nest
+  const re = new RegExp(m.re.source, "g");
   for (let hit = re.exec(text); hit; hit = re.exec(text)) {
     if (hit.index > last) out.push(text.slice(last, hit.index));
     out.push(
@@ -62,7 +59,7 @@ const INLINE = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/.source;
 export function inline(text: string, m: Matcher, key = "i", auto = true): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
-  const re = new RegExp(INLINE, "g"); // own instance: bold text recurses into inline()
+  const re = new RegExp(INLINE, "g");
   for (let hit = re.exec(text); hit; hit = re.exec(text)) {
     if (hit.index > last) out.push(...(auto ? autoLink(text.slice(last, hit.index), m, `${key}${last}`) : [text.slice(last, hit.index)]));
     if (hit[1] !== undefined) {
@@ -96,8 +93,6 @@ function cells(line: string): string[] {
   return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
 }
 
-// Line-based parser: paragraphs, headings, "- " and "1. " lists, and Markdown tables.
-// Blocks do not need blank lines between them (models often omit them).
 export function parseBlocks(text: string): Block[] {
   const lines = text.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
@@ -194,7 +189,6 @@ export function RichText({ text, autoLinks = true }: { text: string; autoLinks?:
   );
 }
 
-/** One line of text, no paragraphs. */
 export function InlineText({ text }: { text: string }) {
   const m = useMatcher();
   return <>{inline(text, m)}</>;

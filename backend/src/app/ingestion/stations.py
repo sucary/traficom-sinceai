@@ -23,7 +23,6 @@ def frequency_hz(value):
 
 
 def compact_bandwidth_hz(value):
-    """Parse the workbook's compact/ITU-style transmission bandwidth values."""
     if value is None or str(value).strip() == "":
         return None
     text = str(value).strip()

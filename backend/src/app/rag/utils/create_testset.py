@@ -8,7 +8,6 @@ from transformers import pipeline
 
 
 def extract_text_from_pdf(pdf_path):
-    """Extract text from a PDF file using pdfplumber."""
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
@@ -19,7 +18,6 @@ def extract_text_from_pdf(pdf_path):
 
 
 def process_pdf_directory(pdf_dir):
-    """Extract text from all PDF files in the given directory."""
     all_text = ""
     for filename in os.listdir(pdf_dir):
         if filename.lower().endswith(".pdf"):
@@ -31,7 +29,6 @@ def process_pdf_directory(pdf_dir):
 
 
 def split_text_into_chunks(text, chunk_size=300):
-    """Split the text into chunks of a given number of words."""
     words = text.split()
     chunks = []
     for i in range(0, len(words), chunk_size):
@@ -40,10 +37,8 @@ def split_text_into_chunks(text, chunk_size=300):
     return chunks
 
 def filter_noise_lines(text, max_digit_ratio=0.5):
-    """Drop lines where digits+punctuation exceed max_digit_ratio of total chars."""
     clean_lines = []
     for line in text.splitlines():
-        # If the line is mostly digits/punct, skip it
         non_ws = line.replace(" ", "")
         if not non_ws:
             continue
@@ -55,24 +50,21 @@ def filter_noise_lines(text, max_digit_ratio=0.5):
     return "\n".join(clean_lines)
 
 def strip_headers_footers(text):
-    # Adjust the regex to match your specific boilerplate
     text = re.sub(r"^Page\s+\d+\s+of\s+\d+(\r?\n)?", "", text, flags=re.MULTILINE)
-    # Remove any lines like “Company Confidential” or “© 2024 Telecom Corp”
     text = re.sub(r".*Confidential.*|©\s*\d{4}.*", "", text)
     return text
 
 def normalize_whitespace(text):
-    text = re.sub(r"\r\n?", "\n", text)           # unify line breaks
-    text = re.sub(r"\n{2,}", "\n\n", text)         # at most one blank line
-    text = re.sub(r"[“”]", '"', text)              # normalize quotes
+    text = re.sub(r"\r\n?", "\n", text)
+    text = re.sub(r"\n{2,}", "\n\n", text)
+    text = re.sub(r"[“”]", '"', text)
     return text.strip()
 
 def clean_and_chunk(text, chunk_size=300):
     text = strip_headers_footers(text)
     text = filter_noise_lines(text)
     text = normalize_whitespace(text)
-    # optionally: text = keep_relevant_sentences(text)
-    
+
     words = text.split()
     chunks = []
     for i in range(0, len(words), chunk_size):
@@ -84,34 +76,19 @@ def clean_and_chunk(text, chunk_size=300):
 generator = pipeline("text2text-generation", model="google/flan-t5-xxl")
 
 def generate_qna_from_chunk(chunk, prompt_template):
-    """Generate QnA text from a text chunk using a prompt template."""
     prompt = prompt_template.format(context=chunk)
     outputs = generator(prompt, max_length=500, num_return_sequences=1, no_repeat_ngram_size=2)
     qna_text = outputs[0]['generated_text']
-    # Debug print
-    # print("Generated QnA text:\n", qna_text)
     return qna_text
 
 def split_options(options_string):
-    """
-    Splits a single string of options (marked by A, B, C, D)
-    into a list of option texts, preserving the markers.
-    Example:
-      "A Option1 text.B Option2 text.C Option3 text.D Option4 text."
-      returns: ['A Option1 text.', 'B Option2 text.', 'C Option3 text.', 'D Option4 text.']
-    """
     pattern = r'([ABCD])\s*(.*?)(?=(?:[ABCD]\s)|$)'
     matches = re.findall(pattern, options_string)
     return [f"{marker} {text.strip()}" for marker, text in matches]
 
 
 def parse_qna_text(qna_text, chunk):
-    """
-    Parse the QnA text to extract questions, options, answer, and explanation,
-    and return a list of dataset entries.
-    """
     dataset = []
-    # Regex to capture question, options, answer, and optional explanation.
     pattern = r"Q:\s*(?P<question>.*?)\s*Options:\s*(?P<options>.*?)\s*Answer:\s*(?P<answer>.*?)(?:\s*Explanation:\s*(?P<explanation>.*?))?(?=\s*Q:|$)"
     matches = re.finditer(pattern, qna_text, re.DOTALL)
     for match in matches:
@@ -143,12 +120,6 @@ def parse_qna_text(qna_text, chunk):
 
 
 def judge_qna_entry(entry, judge_evaluator, judge_prompt_template):
-    """
-    This function uses a specialized telecom LLM (tele-llm-de-quali) to evaluate a generated QnA entry.
-    It returns True if the judge deems the entry as 'good' (i.e. high quality and consistent with the context),
-    otherwise False.
-    """
-    # Build the judge prompt using the provided template and entry details
     judge_prompt = judge_prompt_template.format(
         context=entry["context"],
         question=entry["question"],
@@ -156,34 +127,26 @@ def judge_qna_entry(entry, judge_evaluator, judge_prompt_template):
         answer=entry["answer"],
         explanation=entry["explanation"]
     )
-    # Get the judge's output
     judge_output = judge_evaluator(judge_prompt, max_length=2048, do_sample=False)
     judgment = judge_output[0]['generated_text'].strip()
     print("Judge output:", judgment)
-    # Accept the entry if the judgment contains "good" (case-insensitive)
     return "good" in judgment.lower()
 
 
 def generate_qna_dataset(chunks, prompt_template, judge_evaluator, judge_prompt_template, desired_num_questions=150):
-    """
-    Generate a QnA dataset from text chunks using a generation model and a judge evaluator.
-    """
     final_dataset = []
     total_chunks = len(chunks)
     if total_chunks == 0:
         return final_dataset
 
-    # Calculate the step size to evenly sample chunks
     step = max(1, total_chunks // desired_num_questions)
     processed_indices = set()
 
-    # First pass: process chunks at indices 0, step, 2*step, ...
     for i in range(0, total_chunks, step):
         try:
             print(f"Processing chunk {i} (first pass)...")
             qna_text = generate_qna_from_chunk(chunks[i], prompt_template)
             qna_entries = parse_qna_text(qna_text, chunks[i])
-            # Evaluate each QnA entry using the judge evaluator
             for entry in qna_entries:
                 if judge_qna_entry(entry, judge_evaluator, judge_prompt_template):
                     final_dataset.append(entry)
@@ -193,7 +156,6 @@ def generate_qna_dataset(chunks, prompt_template, judge_evaluator, judge_prompt_
             print(f"Error processing chunk {i}: {e}")
         processed_indices.add(i)
 
-    # Second pass: try additional offsets if not enough questions have been generated
     for offset in range(1, step):
         for i in range(offset, total_chunks, step):
             if i in processed_indices:
@@ -213,10 +175,6 @@ def generate_qna_dataset(chunks, prompt_template, judge_evaluator, judge_prompt_
 
 
 def evaluate_llm_on_dataset(dataset, evaluator):
-    """
-    Evaluate the generated QnA dataset using a given evaluator LLM.
-    Returns the accuracy as a percentage.
-    """
     correct_count = 0
     for entry in dataset:
         prompt = (
@@ -234,10 +192,8 @@ def evaluate_llm_on_dataset(dataset, evaluator):
     accuracy = (correct_count / len(dataset)) * 100 if dataset else 0
     return accuracy
 
-# ----- Main execution -----
 if __name__ == "__main__":
-    # Specify the directory containing your PDF files
-    pdf_directory = "./data"  
+    pdf_directory = "./data"
     print("Extracting text from PDFs...")
     all_text = process_pdf_directory(pdf_directory)
     print("Text extraction complete.")
@@ -245,7 +201,6 @@ if __name__ == "__main__":
     chunks = clean_and_chunk(all_text, chunk_size=300)
     print(f"Text split into {len(chunks)} chunks.")
 
-    # Define a prompt template for question generation.
     prompt_template = (
         "You are a telecom regulations expert. Given the following telecom regulations excerpt, generate "
         "ONE multiple-choice question with 4 options. Ensure that your output follows this exact format:\n\n"
@@ -258,7 +213,6 @@ if __name__ == "__main__":
         "You should generate a question, 4 options, the correct answer, and an explanation for your choice. Ensure that your output follows this exact format.\n\n"
     )
 
-    # Define a prompt template for the judge evaluation.
     judge_prompt_template = (
         "You are an impartial judge specialized in telecom regulations quality evaluation. Given the following context and generated QnA, "
         "determine if the question is of high quality and fully consistent with the context. "
@@ -271,18 +225,17 @@ if __name__ == "__main__":
         "Your evaluation:"
     )
 
-    
+
     judge_evaluator = pipeline("text-generation", model="AliMaatouk/LLama-3-8B-Tele-it")
-    
+
     dataset = generate_qna_dataset(chunks, prompt_template, judge_evaluator, judge_prompt_template, desired_num_questions=1500)
     print(f"Generated {len(dataset)} questions after judge evaluation.")
 
-    # Save the generated dataset to a JSON file
     with open("try_qna_dataset_cleaned_v1500.json", "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
     print("Dataset saved to regulations_qna_big_dataset.json.")
 
-    del generator, judge_evaluator  
+    del generator, judge_evaluator
     gc.collect()
     torch.cuda.empty_cache()
 

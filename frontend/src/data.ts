@@ -1,6 +1,3 @@
-// Assessment data types and loading. The data comes from the configured backend
-// (see api/client.ts); without one it is public/data/assessment.json, written by
-// backend/scripts/export_frontend_data.py from the calculation results in output/.
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "./api/client";
 
@@ -30,9 +27,45 @@ export interface Issue {
   id: string;
   label: string;
   kind: "Space" | "Terrestrial";
+  published?: string;
   counts: Record<string, number>;
+  highlights?: { label: string; value?: number; date?: string }[];
   noticesOfConcern: number;
   runId: string;
+  regulatoryFramework?: FrameworkItem[];
+}
+
+export interface FrameworkItem {
+  level: string;
+  provision: string;
+  role: string;
+  printedPage?: number | null;
+  pdfPage?: number | null;
+  url?: string | null;
+  file?: string | null;
+}
+
+export interface Linked {
+  text: string;
+  ref: string | null;
+}
+
+export interface NeighbourRow {
+  administration: Linked;
+  assignment: Linked;
+  frequencyMhz: string;
+  distanceKm: number | null;
+  marginDb: number | null;
+  event: string;
+  status: string;
+  flags: string[];
+}
+
+export interface Anomaly {
+  type: string;
+  dimension: string;
+  subject: string;
+  reason: string;
 }
 
 export interface Station {
@@ -45,13 +78,10 @@ export interface Station {
   limit: number | null;
   marginDb: number | null;
   distanceKm?: number;
-  /** Finland's M4 allocation band of this station's protected frequency (space). */
   finnishBand?: string;
-  /** Finland's fixed/mobile allocation category in that band: primary, secondary or not_listed. */
   nationalUse?: string;
 }
 
-/** Finnish-usage view: the same cases regrouped per frequency band and per Finnish station. */
 export interface UsageBand {
   band: string;
   kind: "Space" | "Terrestrial";
@@ -97,8 +127,8 @@ export interface Notice {
   issueId: string;
   kind: "Space" | "Terrestrial";
   noticeId: string;
-  administration: string; // ISO 3166 alpha-3, always 3 letters
-  ituCode?: string; // the ITU administration code (F, G, CHN, ...)
+  administration: string;
+  ituCode?: string;
   administrationName: string;
   name: string;
   provision: string;
@@ -116,11 +146,11 @@ export interface Notice {
   rule: { id: string; text: string };
   citation: { document: string; provision: string; printedPage: number | null; pdfPage: number | null; url?: string };
   assumptions: string[];
-  /** Caveats that apply to the headline (worst-case) values. */
   caveats: string[];
-  /** Caveats found only on other cases of this notice, with how many cases they apply to. */
   otherCaseCaveats?: { text: string; cases: number }[];
   worstCaseId?: string;
+  responseDeadline?: { date: string; rule: string };
+  nationalContext?: { mobileInFinland: string; m4Bands: string[] };
   stationsAffected: number;
   casesOfConcern: number;
   stations: Station[];
@@ -134,6 +164,10 @@ export interface Change {
 }
 
 export interface Trend {
+  issueId?: string;
+  anomalies?: Anomaly[];
+  anomalyRules?: Record<string, string>;
+  neighbourActivity?: { rows: NeighbourRow[]; notes: string[] };
   previous: string;
   current: string;
   administrations: Change[];
@@ -144,7 +178,7 @@ export interface Assessment {
   generated: string;
   issues: Issue[];
   notices: Notice[];
-  usage?: Usage;
+  usageByIssue?: Record<string, Usage>;
   trends: Trend[];
 }
 
@@ -164,7 +198,6 @@ export function useAssessment(): { data: Assessment | null; failed: boolean } {
   return { data, failed };
 }
 
-/** Shared app data, so any text renderer can link known entity names. */
 export const DataContext = createContext<Assessment | null>(null);
 export const useData = () => useContext(DataContext);
 

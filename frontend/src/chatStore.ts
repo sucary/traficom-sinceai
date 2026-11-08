@@ -1,5 +1,3 @@
-// Conversations kept in this browser. Swap for a backend store later by
-// replacing load/save; the components only use the hooks and functions below.
 import { useSyncExternalStore } from "react";
 import type { ChatMessage, Conversation, EntityRef } from "./api/types";
 
@@ -20,7 +18,7 @@ function save() {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
-    // storage full or blocked: keep working in memory
+    return;
   }
 }
 
@@ -80,7 +78,6 @@ export function removeMessagesFrom(id: string, messageId: string) {
   );
 }
 
-/** A question handed over from another page ("Ask about this notice"). */
 let pending: { question: string; ref?: EntityRef } | null = null;
 
 export function queueQuestion(question: string, ref?: EntityRef) {

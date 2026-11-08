@@ -43,7 +43,7 @@ def create_faiss_index(
 
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
-    index.add(embeddings)  
+    index.add(embeddings)
 
     faiss.write_index(index, index_path)
     np.save(chunks_path, chunks)

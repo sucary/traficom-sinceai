@@ -1,11 +1,3 @@
-"""Report which review cases have an applicable pfd criterion.
-
-For every review case, each satellite frequency band is looked up against the
-criteria table (currently RR Table 21-4, Finland / Region 1 rows only). Orbit is
-taken from the notice type (G = geostationary, N = non-geostationary; anything
-else is left unknown so both orbit kinds are returned). No pfd is calculated.
-"""
-
 import csv
 import json
 from pathlib import Path
@@ -29,11 +21,6 @@ def _range_label(frequency_hz):
 
 
 def relevant_intervals(case):
-    """Satellite frequencies that matter for this Finnish band, not the whole satellite band.
-
-    Co-frequency: the intersection segments. Adjacent: each satellite band clipped to
-    the protected band widened by one protected bandwidth on each side.
-    """
     if case["matched_frequency_segments_hz"]:
         return [(item["frequency_min_hz"], item["frequency_max_hz"]) for item in case["matched_frequency_segments_hz"]]
     finnish = case["finnish_usage"]

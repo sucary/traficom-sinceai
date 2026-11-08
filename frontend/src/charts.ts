@@ -1,12 +1,11 @@
-// Every statistics chart, described once so the overview cards and the
-// full list view (#/stats/<id>) show the same rows.
 import type { Assessment } from "./data";
 
 export interface ChartRow {
   label: string;
-  value: number; // single series, or the current issue for comparisons
-  previous?: number; // set for comparisons between two issues
-  ref?: string; // where the row label leads
+  value: number;
+  previous?: number;
+  ref?: string;
+  date?: string;
 }
 
 export interface Chart {
@@ -16,9 +15,22 @@ export interface Chart {
   rows: ChartRow[];
   valueLabel: string;
   previousLabel?: string;
+  sortable?: boolean;
 }
 
-/** Rows that fit inside a card of fixed size; the rest is behind "Show all". */
+export type ChartSort = "date" | "number";
+
+export function sortedRows(chart: Chart, sort: ChartSort, limit?: number): ChartRow[] {
+  if (sort === "number") {
+    const rows = [...chart.rows].sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+    return limit === undefined ? rows : rows.slice(0, limit);
+  }
+  const rows = [...chart.rows].sort(
+    (a, b) => (a.date ?? "").localeCompare(b.date ?? "") || a.label.localeCompare(b.label),
+  );
+  return limit === undefined ? rows : rows.slice(Math.max(0, rows.length - limit));
+}
+
 export const CARD_ROWS: Record<Chart["form"], number> = { columns: 6, bars: 8, pairs: 4 };
 
 export function charts(data: Assessment): Chart[] {
@@ -31,7 +43,13 @@ export function charts(data: Assessment): Chart[] {
       title: "Notices of concern by issue",
       form: "columns",
       valueLabel: "Notices of concern",
-      rows: data.issues.map((i) => ({ label: i.label, value: i.noticesOfConcern, ref: `issue:${i.id}` })),
+      sortable: true,
+      rows: data.issues.map((i) => ({
+        label: i.label,
+        value: i.noticesOfConcern,
+        ref: `issue:${i.id}`,
+        date: i.published,
+      })),
     },
     {
       id: "notices-by-administration",

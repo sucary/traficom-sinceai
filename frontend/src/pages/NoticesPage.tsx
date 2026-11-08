@@ -2,7 +2,6 @@ import { Assessment } from "../data";
 import { NoticeList } from "../components/NoticeList";
 import { BackIcon } from "../components/Icons";
 
-/** Every notice of concern for one issue or one administration. */
 export function NoticesPage({
   data,
   scope,

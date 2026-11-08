@@ -1,11 +1,3 @@
-"""Match satellite downlink bands to Finnish protected-frequency bands.
-
-Two relations are screened: co-frequency (closed intervals intersect) and adjacent
-(the gap between the bands is at most ``adjacent_channels`` protected bandwidths).
-This module performs screening only. It does not calculate PFD, field strength,
-propagation, regulatory limits, margins, or interference risk.
-"""
-
 from bisect import bisect_right
 import csv
 from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_FLOOR
@@ -55,7 +47,6 @@ def _outward_band(center_hz, bandwidth_hz):
 
 
 def protected_bands(station):
-    """Return deduplicated RX/TX bands that represent Finnish protected use."""
     width = station.get("effective_bandwidth_hz")
     if width is None:
         channel = station.get("channel_bandwidth_hz")
@@ -81,7 +72,6 @@ def protected_bands(station):
 
 
 def satellite_band(frequency):
-    """Normalize an ITU freq row to a closed whole-Hz interval."""
     lower = _whole_hz(frequency.get("freq_min"), Decimal(1000000))
     upper = _whole_hz(frequency.get("freq_max"), Decimal(1000000))
     center = _whole_hz(frequency.get("freq_mhz"), Decimal(1000000))
@@ -104,13 +94,11 @@ def satellite_band(frequency):
 
 
 def search_window(band, adjacent_channels=0):
-    """Return the protected band widened by N protected bandwidths on each side."""
     guard = int(band.get("bandwidth_hz") or 0) * int(adjacent_channels)
     return max(0, band["frequency_min_hz"] - guard), band["frequency_max_hz"] + guard, guard
 
 
 def frequency_relation(satellite, protected):
-    """Describe how a satellite band relates to a protected band (whole Hz)."""
     lower = max(satellite["frequency_min_hz"], protected["frequency_min_hz"])
     upper = min(satellite["frequency_max_hz"], protected["frequency_max_hz"])
     protected_width = protected["frequency_max_hz"] - protected["frequency_min_hz"]
@@ -132,7 +120,6 @@ def frequency_relation(satellite, protected):
 
 
 def match_intervals(satellite_rows, finnish_bands, adjacent_channels=0):
-    """Yield (satellite, protected, relation) for co-frequency and adjacent pairs."""
     windows = []
     for band in finnish_bands:
         lower, upper, guard = search_window(band, adjacent_channels)

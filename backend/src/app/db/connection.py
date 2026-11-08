@@ -1,5 +1,3 @@
-"""Certificate-verified PostgreSQL connections with private password entry."""
-
 from getpass import getpass
 
 import psycopg

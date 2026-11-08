@@ -1,5 +1,3 @@
-"""Narrow, auditable adapter around the published P.1546-6 implementation."""
-
 from __future__ import annotations
 
 import math
@@ -9,12 +7,10 @@ MODEL_VERSION = "ITU-R P.1546-6 / Py1546 commit e235629"
 
 
 def erp_kw_from_radiated_power(power_dbw: float, power_type: str) -> tuple[float, float]:
-    """Convert an IFIC radiated power to ERP kW and report the applied dB delta."""
     kind = (power_type or "").strip().upper()
     if kind == "E":
         delta_db = 0.0
     elif kind == "I":
-        # EIRP uses an isotropic reference; ERP uses a half-wave dipole.
         delta_db = -2.15
     else:
         raise ValueError("radiated power type must be E (ERP) or I (EIRP)")
@@ -34,7 +30,6 @@ def field_strength_dbuv_m(
     time_percentage: float = 10.0,
     location_percentage: float = 50.0,
 ) -> tuple[float, float]:
-    """Calculate field strength and basic transmission loss with P.1546-6."""
     values = (frequency_mhz, distance_km, effective_tx_height_m, erp_kw)
     if not all(math.isfinite(float(value)) and float(value) > 0 for value in values):
         raise ValueError("frequency, distance, height and ERP must be finite and positive")
@@ -45,9 +40,6 @@ def field_strength_dbuv_m(
     if path_zone not in {"Land", "Sea", "Warm", "Cold"}:
         raise ValueError("unsupported P.1546 path zone")
 
-    # Py1546 6.1 uses the removed NumPy 1.x alias ``np.mat``.  Mapping it to
-    # the documented equivalent keeps the published algorithm usable on
-    # NumPy 2 without changing the matrix values or operations.
     import numpy as np
     if not hasattr(np, "mat"):
         np.mat = np.asmatrix

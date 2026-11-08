@@ -1,5 +1,3 @@
-"""Verify views and evidence constraints against the disposable local database."""
-
 from datetime import date
 from decimal import Decimal
 from pathlib import Path

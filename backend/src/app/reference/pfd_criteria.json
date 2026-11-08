@@ -20,7 +20,14 @@
     "method": "Read from rendered PDF pages 297-301 and cross-checked with pdftotext -layout extraction.",
     "transcribed_by": "Claude (AI-assisted), 2026-11-07",
     "verified_by": null,
-    "status": "unverified_ai_transcription"
+    "status": "ai_transcription_cross_checked",
+    "cross_check": {
+      "date": "2026-11-07",
+      "method": "Second, independent row-by-row comparison of all 40 criteria with the rendered printed pages 287-291 (PDF pages 297-301): frequency bands, orbit, reference bandwidth, elevation segments and limit formulas.",
+      "result": "All 40 criteria match the printed table; no discrepancies found.",
+      "by": "Claude (AI-assisted)"
+    },
+    "expert_verification": "pending"
   },
   "scope": {
     "included": "All rows of RR Table 21-4 (Rev.WRC-23).",

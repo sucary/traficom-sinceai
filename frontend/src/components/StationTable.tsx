@@ -4,8 +4,6 @@ import { stationRef } from "../links";
 import { go } from "../router";
 import { Ref } from "./RichText";
 
-/** Stations (space) or assessment points (terrestrial) of one notice. Shows at most
- *  `limit` rows; the full table opens in its own view (#/cases/<notice>). */
 export function StationTable({ notice, limit }: { notice: Notice; limit?: number }) {
   const space = notice.kind === "Space";
   const word = limitWord(notice.kind);

@@ -1,5 +1,3 @@
-"""Connection options restricted to disposable local PostgreSQL instances."""
-
 import argparse
 
 import psycopg

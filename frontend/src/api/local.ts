@@ -1,6 +1,3 @@
-// Backend stand-in that runs in the browser on the exported results.
-// It answers chat questions with fixed rules, but emits the same event stream
-// a real AI backend will, so every chat element can be built and tested now.
 import type { Assessment, Notice } from "../data";
 import { label } from "../data";
 import { limitWord, margin } from "../format";

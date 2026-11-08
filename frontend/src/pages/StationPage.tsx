@@ -70,8 +70,8 @@ export function StationPage({ data, id }: { data: Assessment; id: string }) {
                   <th>Administration</th>
                   <th>Protected band</th>
                   <th>Status</th>
-                  <th className="num">Value</th>
-                  <th className="num">Limit</th>
+                  <th className="num">PFD or field strength</th>
+                  <th className="num">Limit or threshold</th>
                   <th className="num">Margin</th>
                 </tr>
               </thead>

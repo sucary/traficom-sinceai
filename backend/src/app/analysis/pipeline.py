@@ -1,5 +1,3 @@
-"""Rebuild and publish one internally consistent analysis pipeline generation."""
-
 import json
 from pathlib import Path
 import re
@@ -20,21 +18,18 @@ from . import (
 
 
 DEFAULT_IFIC = "ific3074.mdb"
-# Shared context for every evaluated issue: AP30/30A and AP30B plan snapshots and the Finnish workbook.
-SHARED_INPUTS = (
-    "SPS_ALL_IFIC3083.mdb",
-    "30B_3083.mdb",
-    "Traficom_SinceAI_Frequencies_of_interest_v05112026.xlsx",
-)
+WORKBOOK = "Traficom_SinceAI_Frequencies_of_interest_v05112026.xlsx"
+REFERENCE_SNAPSHOTS = ("SPS_ALL_IFIC3083.mdb", "30B_3083.mdb")
+SHARED_INPUTS = (*REFERENCE_SNAPSHOTS, WORKBOOK)
 IFIC_FILE_PATTERN = re.compile(r"^ific(\d{4})\.mdb$", re.I)
 REQUIRED_INPUTS = (DEFAULT_IFIC, *SHARED_INPUTS)
 
 
 def required_inputs(ific_file=DEFAULT_IFIC):
-    """Inputs for one evaluated Space IFIC (SNS v10 MDB named ificNNNN.mdb)."""
     if not IFIC_FILE_PATTERN.fullmatch(ific_file):
         raise ValueError(f"Space IFIC file must be named ificNNNN.mdb, got {ific_file!r}")
-    return (ific_file, *SHARED_INPUTS)
+    snapshots = tuple(name for name in REFERENCE_SNAPSHOTS if (PROJECT_ROOT / "data" / name).is_file())
+    return (ific_file, *snapshots, WORKBOOK)
 OUTPUT_DIRECTORIES = (
     "prepared",
     "frequency-matches",
@@ -47,7 +42,6 @@ OUTPUT_DIRECTORIES = (
 
 
 def _copytree_with_retry(source, destination, attempts=10):
-    """Copy generated artifacts despite short-lived Windows scanner/indexer locks."""
     for attempt in range(attempts):
         try:
             shutil.copytree(source, destination, dirs_exist_ok=True)
@@ -59,7 +53,6 @@ def _copytree_with_retry(source, destination, attempts=10):
 
 
 def validate_counts(matches, cases, classified, readiness, pfd):
-    """Reject mixed or incomplete generations before they reach default paths."""
     checks = {
         "matches_to_cases": (
             matches["frequency_match_candidates"], cases["raw_match_candidates"]
@@ -83,12 +76,6 @@ def validate_counts(matches, cases, classified, readiness, pfd):
 
 
 def _publish(stage_root, output_root):
-    """Replace default contents together, restoring their previous contents on failure.
-
-    Some managed Windows workspaces allow modifying a directory's contents but deny
-    renaming the directory itself. Copying into the stable default directories keeps
-    the publication transactional without relying on directory rename permission.
-    """
     backup_root = stage_root / ".previous"
     backup_root.mkdir()
     backed_up = []
@@ -109,7 +96,6 @@ def _publish(stage_root, output_root):
 
 
 def run(output_root, near_margin_db=pfd_calculation.DEFAULT_NEAR_MARGIN_DB, ific_file=DEFAULT_IFIC):
-    """Build one evaluated IFIC from raw inputs, validate cross-stage counts, then publish."""
     inputs = required_inputs(ific_file)
     if missing := [name for name in inputs if not (PROJECT_ROOT / "data" / name).is_file()]:
         raise ValueError(f"Missing input files in data/: {missing}")
@@ -154,6 +140,7 @@ def run(output_root, near_margin_db=pfd_calculation.DEFAULT_NEAR_MARGIN_DB, ific
             "status": "completed_and_validated",
             "evaluated_ific": ific_file,
             "inputs": list(inputs),
+            "reference_snapshots_missing": [n for n in REFERENCE_SNAPSHOTS if n not in inputs],
             "adjacent_channels": frequency_matching.DEFAULT_ADJACENT_CHANNELS,
             "method_versions": {
                 "frequency_matching": matches["method_version"],

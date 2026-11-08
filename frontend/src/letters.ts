@@ -1,4 +1,3 @@
-// Template letter used when no AI backend drafts it.
 import type { Assessment, Notice } from "./data";
 import { label } from "./data";
 import { limitWord, margin, withUnit } from "./format";

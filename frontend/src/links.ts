@@ -1,5 +1,3 @@
-// Entity references: turning "notice:ific3074:124545403" into a route, and finding
-// known entity names in plain text so they can be linked automatically.
 import type { Assessment } from "./data";
 import type { EntityRef } from "./api/types";
 import { Route, href } from "./router";
@@ -44,10 +42,6 @@ export interface Entity {
   ref: EntityRef;
 }
 
-/**
- * Names worth linking automatically: satellite names, notice numbers, administration
- * names and Finnish station numbers. Longest names first so "CHINASAT 26" wins over "CHINASAT".
- */
 export function buildEntityIndex(data: Assessment): Entity[] {
   const map = new Map<string, EntityRef>();
   for (const n of data.notices) {

@@ -1,6 +1,6 @@
 import os
 import re
-import numpy as np  # <--- TÄMÄ ON TÄRKEÄ
+import numpy as np
 
 import faiss
 import requests
@@ -51,8 +51,7 @@ class RAGService:
     def query_rules(self, frequency_mhz: float, service_type: str) -> str:
         freq_ghz = frequency_mhz / 1000.0
         search_query = f"Frequency: {frequency_mhz} MHz or {freq_ghz} GHz; service type: {service_type}"
-        
-        # 1. Vektorihaku (hakee 10 pätkää)
+
         chunks = retrieve_relevant_chunks(
             search_query,
             self.embedder,
@@ -60,24 +59,21 @@ class RAGService:
             index_path=self.index_path,
             chunks_path=self.chunks_path,
         )
-        
-        # 2. Pakotettu tekstihaku numerolle (koska vektorihaku epäonnistuu numeroissa)
+
         all_chunks = np.load(self.chunks_path, allow_pickle=True)
         freq_str1 = str(int(frequency_mhz))
         freq_str2 = str(freq_ghz)
-        
+
         keyword_matches = []
         for chunk in all_chunks:
             if freq_str1 in chunk or freq_str2 in chunk or freq_str1.replace("0", " 0") in chunk:
                 keyword_matches.append(chunk)
                 if len(keyword_matches) >= 3:
                     break
-                    
-        # Yhdistetään tulokset ja poistetaan duplikaatit
+
         combined_chunks = list(dict.fromkeys(keyword_matches + chunks))
         context = "\n\n".join(combined_chunks)
-        
-        # DEBUG Tulostus, jotta näet mitä tapahtuu
+
         print(f"\n--- HAKUTULOS ---")
         print(f"Tekstihaku löysi {len(keyword_matches)} pätkää hakusanoilla '{freq_str1}' tai '{freq_str2}'.")
         print(f"Kontekstin kokonaispituus: {len(context)} merkkiä.")

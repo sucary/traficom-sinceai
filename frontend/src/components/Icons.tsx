@@ -1,4 +1,3 @@
-// Small stroke icons. They use currentColor, so they follow the button's text colour.
 const base = {
   width: 18,
   height: 18,
@@ -37,7 +36,6 @@ export function BackIcon() {
   );
 }
 
-/** Marks a button that takes you to another page. */
 export function GoIcon() {
   return (
     <svg {...base} width={15} height={15}>

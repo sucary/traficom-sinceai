@@ -1,14 +1,4 @@
-"""One command for any IFIC file: the file name decides which pipeline runs.
-
-- ``ificNNNN.mdb``   -> Space IFIC: frequency matching through worst-case PFD verdicts.
-- ``brificNNNN.mdb`` -> Terrestrial BR IFIC: compared with issue NNNN-1 (which must
-  also be in ``data/``), P.1546 field strengths against ECC T/R 25-08.
-
-One file per run; each issue is written to its own folder,
-``output/<file name without .mdb>/``, because each publication is evaluated and
-reviewed separately. The challenge requires ``ific3074.mdb`` and ``brific3076.mdb``.
-"""
-
+import json
 from pathlib import Path
 import re
 
@@ -23,12 +13,13 @@ TERRESTRIAL = re.compile(r"^brific(\d{4})\.mdb$", re.I)
 
 
 def plan(file_name):
-    """Return (kind, issue, input files) for one IFIC file name, or raise ValueError."""
     if match := SPACE.fullmatch(file_name):
         return "space", int(match[1]), pipeline.required_inputs(file_name)
     if match := TERRESTRIAL.fullmatch(file_name):
         issue = int(match[1])
-        return "terrestrial", issue, (f"brific{issue - 1}.mdb", file_name, SYNTHETIC_WORKBOOK)
+        previous = f"brific{issue - 1}.mdb"
+        inputs = (previous,) if (PROJECT_ROOT / "data" / previous).is_file() else ()
+        return "terrestrial", issue, (*inputs, file_name, SYNTHETIC_WORKBOOK)
     raise ValueError(f"Not an IFIC file name (expected ificNNNN.mdb or brificNNNN.mdb): {file_name!r}")
 
 
@@ -39,8 +30,9 @@ def run_one(file_name, output_root):
     target = output_root / Path(file_name).stem.lower()
     if kind == "space":
         summary = pipeline.run(target, ific_file=file_name)
+        pfd = json.loads((target / "pfd-calculations" / "pfd_summary.json").read_text(encoding="utf-8"))
         return {"file": file_name, "kind": kind, "issue": issue, "output": str(target),
-                "status": summary["status"], "counts": summary["counts"]}
+                "status": summary["status"], "counts": pfd["counts"]}
     prepared = prepare(PROJECT_ROOT, target / "prepared", only=inputs)
     if not prepared["complete"]:
         raise ValueError(f"{file_name}: input preparation failed: {prepared['errors']}")
@@ -50,5 +42,25 @@ def run_one(file_name, output_root):
 
 
 def run(file_name, output_root=None):
-    plan(file_name)  # reject a wrong name before any long work starts
+    plan(file_name)
     return run_one(file_name, (output_root or PROJECT_ROOT / "output").resolve())
+
+
+def issue_order(file_name):
+    kind, issue, _ = plan(file_name)
+    return (kind, issue)
+
+
+def run_many(file_names, output_root=None, on_progress=None):
+    results = []
+    for name in sorted(file_names, key=issue_order):
+        if on_progress:
+            on_progress(name, "running", None)
+        try:
+            result = run(name, output_root)
+        except Exception as error:
+            result = {"file": name, "status": "failed", "error": str(error)}
+        results.append(result)
+        if on_progress:
+            on_progress(name, result["status"], result)
+    return results

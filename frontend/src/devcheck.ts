@@ -1,4 +1,3 @@
-// Development only: warns in the console when the page breaks the design rules.
 const INPUTS = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON", "OPTION", "OPTGROUP"]);
 const FORBIDDEN = [/—/, /\s\|\s/, /\s-\s/, /·/, /–/];
 

@@ -1,20 +1,3 @@
-"""Check RR No. 21.16 "shared with equal rights" against Article 5 Region 1 and Finland's M4.
-
-No. 21.16: Table 21-4 limits apply "to emissions by a space station of the service
-indicated where the frequency bands are shared with equal rights with the fixed or
-mobile service, unless otherwise stated".
-
-- Legal test (Article 5, Region 1, footnotes checked for Finland): in each Region 1
-  sub-band, the satellite's service must hold an allocation usable by a transmitting
-  space station (space-to-Earth, space-to-space or no stated direction), and a partner
-  service (fixed or mobile, unless the row states another basis) must hold an allocation
-  of the same category. Primary/primary and secondary/secondary are equal rights.
-- National context (M4): whether Finland's Frequency Allocation Table lists the partner
-  service in the band, and with which category. M4 lists services "in use or intended to
-  be used" in Finland, so it can be narrower than Region 1; it does not change the legal
-  result, it tells the expert whether there is national fixed/mobile use to protect.
-"""
-
 from functools import lru_cache
 import json
 from pathlib import Path
@@ -42,7 +25,6 @@ def _hz(text):
 
 
 def m4_service_tokens(name):
-    """Map an M4 'Services_in_Finland' string to (tokens, category, directions)."""
     raw = name.strip()
     letters = re.sub(r"[^A-Za-z]", "", raw.split("(")[0])
     category = "primary" if letters and letters == letters.upper() else "secondary"
@@ -85,7 +67,6 @@ def m4_service_tokens(name):
 
 @lru_cache(maxsize=1)
 def load_m4(path=None):
-    """M4 bands with their services, one entry per (band lower, band upper)."""
     if path is None:
         from ..config import PROJECT_ROOT
         path = PROJECT_ROOT / M4_FILE
@@ -115,7 +96,6 @@ def _best(categories):
 
 
 def sharing_basis(criterion, lower, upper):
-    """Partner services and basis for a criterion in [lower, upper]: default or row-specific."""
     for override in criterion.get("sharing_basis", []):
         if override["frequency_min_hz"] <= lower and upper <= override["frequency_max_hz"]:
             return override
@@ -123,13 +103,6 @@ def sharing_basis(criterion, lower, upper):
 
 
 def article5_assessment(criterion, service_tokens, lower, upper, document=None):
-    """Per Region 1 sub-band verdict on equal-rights sharing for the given services.
-
-    Returns a list of sub-band results; ``result`` is one of:
-    equal_rights, explicitly_applicable, unequal_rights, partner_not_allocated,
-    service_not_allocated (the space service has no transmitting allocation: RR No. 4.4),
-    no_article5_entry.
-    """
     document = document or load_article5()
     results = []
     covered = []
@@ -158,7 +131,6 @@ def article5_assessment(criterion, service_tokens, lower, upper, document=None):
             "location": band["location"], "service_category": space, "partner_services": basis["partners"],
             "partner_category": partner, "basis": basis["basis"], "result": result,
         })
-    # Report uncovered spectrum explicitly rather than silently passing it.
     cursor = lower
     for start, end in sorted(covered):
         if start > cursor:
@@ -173,7 +145,6 @@ APPLICABLE_RESULTS = {"equal_rights", "explicitly_applicable"}
 
 
 def m4_assessment(partners, service_tokens, lower, upper, bands=None):
-    """Finland's M4 categories for the partner services and the satellite service."""
     bands = load_m4() if bands is None else bands
     found = []
     for band in bands:

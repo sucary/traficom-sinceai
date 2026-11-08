@@ -1,5 +1,3 @@
-"""Consolidate raw frequency-overlap rows into expert-review cases."""
-
 import csv
 import hashlib
 import json
@@ -12,7 +10,6 @@ INPUT_CLASSIFICATIONS = {"frequency_match_candidate", "frequency_overlap_candida
 
 
 def merge_closed_intervals(intervals):
-    """Return the union of overlapping closed intervals without bridging gaps."""
     ordered = sorted((int(lower), int(upper)) for lower, upper in intervals)
     merged = []
     for lower, upper in ordered:
@@ -162,7 +159,6 @@ def consolidate(records):
 
 
 def notice_rollups(cases):
-    """Summarize review cases per space dataset and notice (one correspondence unit)."""
     rollups = {}
     for case in cases:
         space, finnish, relation = case["space"], case["finnish_usage"], case["frequency_relation"]

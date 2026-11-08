@@ -1,5 +1,3 @@
-"""Shared local paths and connection arguments. No dotenv files are read."""
-
 from pathlib import Path
 
 

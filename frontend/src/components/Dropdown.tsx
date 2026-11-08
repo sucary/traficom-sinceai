@@ -11,7 +11,9 @@ export function Dropdown({
   value,
   options,
   onChange,
+  compact = false,
 }: {
+  compact?: boolean;
   ariaLabel: string;
   value: string;
   options: DropdownOption[];
@@ -45,7 +47,7 @@ export function Dropdown({
   }
 
   return (
-    <div className={"dropdown" + (open ? " open" : "")} ref={root} onKeyDown={keyDown}>
+    <div className={"dropdown" + (compact ? " compact" : "") + (open ? " open" : "")} ref={root} onKeyDown={keyDown}>
       <button
         ref={trigger}
         type="button"

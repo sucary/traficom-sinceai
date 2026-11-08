@@ -25,7 +25,6 @@ class PipelineValidationTests(unittest.TestCase):
             )
 
 
-
 class IssueSelectionTests(unittest.TestCase):
     def test_any_space_ific_issue_can_be_evaluated(self):
         self.assertEqual(required_inputs("ific3075.mdb"), ("ific3075.mdb", *SHARED_INPUTS))

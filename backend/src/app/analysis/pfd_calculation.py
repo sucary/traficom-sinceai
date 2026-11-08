@@ -1,22 +1,3 @@
-"""Worst-case pfd at Finnish stations and margins against RR Table 21-4.
-
-Deterministic, free-space screening calculation. For each review case:
-
-    pfd(δ) = P_ref + G_max - 10*log10(4*pi*d(δ)^2)        [dB(W/m2) in B_ref]
-
-- P_ref: filed maximum power density (dBW/Hz) + 10*log10(B_ref), capped at the
-  filed peak envelope power (the carrier cannot put more than its total power into
-  the reference bandwidth). Worst emission of the case's frequency groups.
-- G_max: maximum isotropic gain of the satellite beam; worst-case pointing at the
-  station, as instructed by Traficom (beams can move; worst case always assumed).
-- d(δ): slant range at angle of arrival δ. GSO: fixed geometry per station.
-  Non-GSO: δ is swept from 0° to the highest elevation the orbit can reach over the
-  station latitude, using the lowest filed altitude (perigee) for distance.
-
-margin = limit(δ) - pfd(δ); the worst (smallest) margin over δ is reported.
-A negative margin is a calculated exceedance of the Table 21-4 limit.
-"""
-
 import csv
 from functools import lru_cache
 import hashlib
@@ -68,7 +49,6 @@ def _sha256(path):
 
 
 def regulation_citation(criterion, document):
-    """Portable, direct citation copied into every criterion evaluation."""
     source = document["sources"][criterion["source"]]
     return {
         "criterion_id": criterion["criterion_id"],
@@ -84,7 +64,6 @@ def regulation_citation(criterion, document):
 
 
 def run_evidence(readiness_dir, cases_path, near_margin_db):
-    """Deterministic run identity and hashes of every calculation input artifact."""
     paths = (
         ("review_cases", cases_path),
         ("case_readiness", readiness_dir / "case_calculation_readiness.jsonl"),
@@ -117,7 +96,6 @@ def run_evidence(readiness_dir, cases_path, near_margin_db):
 
 
 def case_evidence(context, readiness_case, notice_profile, frequency_profiles, document):
-    """Complete evidence chain needed to audit one record without upstream joins."""
     orbit_rows = []
     for table, key in (("geo", "geo_records"), ("non_geo", "non_geo_records"), ("orbit", "orbit_records")):
         orbit_rows.extend({"table": table, "source_row": row.get("source_row")}
@@ -166,10 +144,7 @@ def case_evidence(context, readiness_case, notice_profile, frequency_profiles, d
     }
 
 
-# ----------------------------------------------------------------------------- geometry
-
 def gso_geometry(station_lat_deg, station_lon_deg, satellite_lon_deg):
-    """Elevation (deg) and slant range (km) from a station to a GSO satellite."""
     lat = math.radians(station_lat_deg)
     dlon = math.radians(((satellite_lon_deg - station_lon_deg + 180) % 360) - 180)
     cos_psi = math.cos(lat) * math.cos(dlon)
@@ -182,7 +157,6 @@ def gso_geometry(station_lat_deg, station_lon_deg, satellite_lon_deg):
 
 
 def slant_range_km(elevation_deg, altitude_km):
-    """Distance from a ground point to a satellite at the given altitude seen at elevation."""
     e = math.radians(elevation_deg)
     r = EARTH_RADIUS_KM + altitude_km
     return math.sqrt(r ** 2 - (EARTH_RADIUS_KM * math.cos(e)) ** 2) - EARTH_RADIUS_KM * math.sin(e)
@@ -197,7 +171,6 @@ def elevation_at_central_angle(psi_deg, altitude_km):
 
 
 def max_elevation_deg(station_lat_deg, inclination_deg, altitude_km):
-    """Highest elevation at which a satellite in this orbit can be seen from the latitude."""
     reach = inclination_deg if inclination_deg <= 90 else 180 - inclination_deg
     gap = abs(station_lat_deg) - reach
     if gap <= 0:
@@ -209,10 +182,7 @@ def spreading_db(distance_km):
     return 10 * math.log10(4 * math.pi * (distance_km * 1000) ** 2)
 
 
-# ----------------------------------------------------------------------------- emission
-
 def power_in_reference_bandwidth(emission, reference_bandwidth_hz):
-    """Return (dBW in B_ref, capped_by_peak_power) or None when no usable power is filed."""
     density = emission.get("maximum_power_density_dbw_per_hz")
     peak = emission.get("peak_envelope_power_dbw")
     if density is None:
@@ -224,14 +194,13 @@ def power_in_reference_bandwidth(emission, reference_bandwidth_hz):
 
 
 def worst_emission(frequency_profiles, reference_bandwidth_hz, frequency_min_hz, frequency_max_hz):
-    """Highest P_ref + G over profiles whose band touches [min, max]."""
     best = None
     for profile in frequency_profiles:
         lower, upper = profile_band_hz(profile)
         if lower is None or upper < frequency_min_hz or lower > frequency_max_hz:
             continue
         if frequency_min_hz < frequency_max_hz and not max(lower, frequency_min_hz) < min(upper, frequency_max_hz):
-            continue  # only touches the edge: no shared spectrum
+            continue
         gains =[beam["maximum_isotropic_gain_db"] for beam in profile.get("satellite_beams", [])
                  if beam.get("maximum_isotropic_gain_db") is not None]
         if not gains:
@@ -270,10 +239,7 @@ def profile_band_hz(profile):
     return math.floor(lower * 1e6), math.ceil(upper * 1e6)
 
 
-# ----------------------------------------------------------------------------- constellation
-
 def constellation_parameters(notice_profile):
-    """X (No. 21.16.6) and Y (No. 21.16.15) where the filed data defines them."""
     orbits = notice_profile.get("orbit_records", [])
     non_geo = notice_profile.get("non_geo_records", [])
     satellites = sum(int(o.get("nbr_sat_pl") or 0) for o in orbits) or None
@@ -287,7 +253,6 @@ def constellation_parameters(notice_profile):
             parameters["X"] = (satellites + 402) / 69
         else:
             notes.append("X needs Nv (max visible satellites), not in the IFIC database, for N >= 1000.")
-            # No. 21.16.6: X = max{20.3; 10 log Nv} for 1 000 <= N <= 6 000, X = 10 log Nv + 1 above (Nv >= 1).
             lower_bounds["X"] = 20.3 if satellites <= 6000 else 1.0
     north = max((int(r.get("nbr_sat_nh") or 0) for r in non_geo), default=0)
     south = max((int(r.get("nbr_sat_sh") or 0) for r in non_geo), default=0)
@@ -299,7 +264,6 @@ def constellation_parameters(notice_profile):
 
 
 def orbit_configurations(notice_profile, station_lat_deg):
-    """Distinct (perigee, apogee, inclination) sets with their visibility from the station."""
     configs = {}
     for orbit in notice_profile.get("orbit_records", []):
         heights = [orbit.get(k) for k in ("perig_km", "apog_km", "op_ht_km") if orbit.get(k) is not None]
@@ -322,13 +286,10 @@ def orbit_configurations(notice_profile, station_lat_deg):
     return result
 
 
-# ----------------------------------------------------------------------------- conditions
-
-NGSO_FSS_CUTOFF_DATE = "1995-11-17"  # Nos. 21.16.6 / 21.16.6A
+NGSO_FSS_CUTOFF_DATE = "1995-11-17"
 
 
 def condition_status(name, context):
-    """Resolve a criterion condition from orbit, constellation, service and receipt date."""
     orbit, configs, constellation = context["orbit"], context["configs"], context["constellation"]
     if name == "heo":
         return "satisfied" if any(c["heo"] for c in configs) else "failed" if configs else "unresolved"
@@ -338,8 +299,6 @@ def condition_status(name, context):
         n = constellation["satellites_in_constellation"]
         return "unresolved" if n is None else "satisfied" if n <= 99 else "failed"
     if name == "gso_or_metsat_or_iss_or_pre1995_ngso_18.8_19.3":
-        # No. 21.16.6A: MetSat space stations and GSO FSS/ISS; pre-17 Nov 1995 non-GSO FSS in
-        # 18.8-19.3 GHz; No. 21.16.6B: HEO FSS under Resolution 147.
         classes = set(context["service_classes"])
         if orbit == "gso" or "EM" in classes:
             return "satisfied"
@@ -353,13 +312,6 @@ def condition_status(name, context):
 
 
 def sharing_check(criterion, service, pieces):
-    """Apply RR No. 21.16 equal-rights sharing per Region 1 sub-band, with M4 national context.
-
-    Only spectrum where the satellite's service and the partner (fixed/mobile unless the row
-    states otherwise) share with equal rights is kept for the calculation. The satellite
-    services checked are the matched groups' services, or the row's services when the
-    group service is unresolved.
-    """
     row_tokens = set(criterion_tokens(criterion))
     if service["status"] == "matched":
         classes = load_station_classes()["classes"]
@@ -392,12 +344,6 @@ def sharing_check(criterion, service, pieces):
 
 
 def service_assessment(criterion, frequency_profiles):
-    """Split a case's frequency groups by whether their service matches the criterion.
-
-    Matching groups decide the verdict. Without any, ambiguous or unknown groups are used
-    for a worst-case candidate value; if every group is a known mismatch, the row does
-    not apply.
-    """
     tokens = criterion_tokens(criterion)
     buckets = {"match": [], "ambiguous": [], "unknown": [], "no_match": []}
     for profile in frequency_profiles:
@@ -416,11 +362,8 @@ def service_assessment(criterion, frequency_profiles):
     }
 
 
-# ----------------------------------------------------------------------------- sweep
-
 @lru_cache(maxsize=200_000)
 def _sweep(criterion_id, parameter_items, altitude_km, max_elevation):
-    """min over δ of limit(δ) + spreading(δ); independent of the emission level."""
     criterion = criterion_by_id(criterion_id)
     parameters = dict(parameter_items)
     angles = {round(i * ELEVATION_STEP_DEG, 6) for i in range(int(max_elevation / ELEVATION_STEP_DEG) + 1)}
@@ -435,7 +378,7 @@ def _sweep(criterion_id, parameter_items, altitude_km, max_elevation):
         try:
             limit = evaluate_formula(formula, angle, **parameters)
         except ValueError:
-            continue  # e.g. log10 of a non-positive argument at an excluded endpoint
+            continue
         spread = spreading_db(slant_range_km(angle, altitude_km))
         if best is None or limit + spread < best[0]:
             best = (limit + spread, angle, limit, spread)
@@ -443,12 +386,6 @@ def _sweep(criterion_id, parameter_items, altitude_km, max_elevation):
 
 
 def evaluate_criterion(criterion, eirp, orbit, geometry, parameters, lower_bounds=None):
-    """Evaluate one criterion. Unknown X/Y with a known lower bound use the bound.
-
-    Table 21-4 limits never increase with X or Y (checked in tests), so the lower bound
-    gives the loosest possible limit: a negative margin then holds for every valid value,
-    while a non-negative one cannot decide and is reported as parameter_missing.
-    """
     needed = set().union(*(formula_variables(s["formula"]) for s in criterion["segments"])) - {"d"}
     missing = sorted(n for n in needed if n not in parameters)
     bounds = lower_bounds or {}
@@ -462,7 +399,6 @@ def evaluate_criterion(criterion, eirp, orbit, geometry, parameters, lower_bound
         return {"status": "parameter_missing", "missing_parameters": missing,
                 "bound_check": "not decisive: margin >= 0 at the loosest possible limit"}
     used = {n: parameters[n] for n in sorted(needed)}
-    # Values stay at full precision; rounding happens only on export (see _rounded).
     if orbit == "gso":
         angle, distance = geometry["elevation_deg"], geometry["slant_range_km"]
         limit = evaluate_formula(segment_at(criterion, angle)["formula"], angle, **used)
@@ -489,13 +425,11 @@ def evaluate_criterion(criterion, eirp, orbit, geometry, parameters, lower_bound
     return worst or {"status": "not_visible"}
 
 
-# ----------------------------------------------------------------------------- case
-
 def relevant_intervals(readiness_case):
     segments = readiness_case.get("matched_frequency_segments_hz") or []
     if segments:
         return [(s["frequency_min_hz"], s["frequency_max_hz"]) for s in segments]
-    return None  # adjacent: resolved from profiles and station band in calculate_case
+    return None
 
 
 def calculate_case(readiness_case, notice_profile, frequency_profiles, station_band, near_margin_db, document):
@@ -547,8 +481,6 @@ def calculate_case(readiness_case, notice_profile, frequency_profiles, station_b
             lower, upper = profile_band_hz(profile)
             if lower is not None and lower <= window[1] and window[0] <= upper:
                 intervals.append((max(lower, window[0]), min(upper, window[1])))
-    # Group every frequency segment by criterion first, so a criterion is judged against
-    # the worst emission over all of its segments, independent of segment order.
     grouped = {}
     for lower, upper in intervals:
         for match in criteria_for(lower, upper, orbit, document=document):
@@ -623,17 +555,10 @@ CONFIRMED_APPLICABILITY = {"applicable"}
 
 
 def margin_class(margin_db, near_margin_db):
-    """Classify at full precision; -0.004 dB is an exceedance, 2.996 dB is near the limit."""
     return "exceeds_limit" if margin_db < 0 else "near_limit" if margin_db < near_margin_db else "below_limit"
 
 
 def apply_special_method(entry, criterion):
-    """Withhold verdicts where the regulation prescribes a different calculation method.
-
-    The generic value is kept as ``screening_estimate``. It still supports a verdict only
-    when the criterion states that the generic value is a proven upper bound of the
-    official quantity and the margin is non-negative.
-    """
     special = criterion.get("special_method")
     if not special or entry.get("status") != "computed":
         return
@@ -650,7 +575,6 @@ def apply_special_method(entry, criterion):
 
 
 def unallocated_rows(evaluations):
-    """Rows where a group of the row's service has no Region 1 allocation in the band (RR No. 4.4)."""
     return [
         {"criterion_id": e["criterion_id"], "satellite_services": e["sharing"]["satellite_services_checked"],
          "segments_hz": [(r["frequency_min_hz"], r["frequency_max_hz"]) for r in e["sharing"]["article5_region1"]
@@ -678,7 +602,6 @@ def _case_result(evaluations, near_margin_db, constellation):
     computed = [e for e in live if e.get("status") == "computed"]
     confirmed_rows = [e for e in computed if e["applicability"] in CONFIRMED_APPLICABILITY]
     if computed:
-        # A confirmed row decides the verdict; unconfirmed rows only decide when none is confirmed.
         governing = min(confirmed_rows or computed, key=lambda e: e["margin_db"])
         margin_kind = margin_class(governing["margin_db"], near_margin_db)
         confirmed = governing["applicability"] in CONFIRMED_APPLICABILITY
@@ -719,7 +642,6 @@ _ROUNDING = {"pfd_db": 2, "limit_db": 2, "margin_db": 2, "max_pfd_db": 2, "worst
 
 
 def _rounded(value):
-    """Round exported numbers only after every classification has been made."""
     if isinstance(value, dict):
         return {k: (round(v, _ROUNDING[k]) if k in _ROUNDING and isinstance(v, float) else _rounded(v))
                 for k, v in value.items()}
@@ -729,7 +651,6 @@ def _rounded(value):
 
 
 def evaluation_caveats(criterion, frequency_hz):
-    """Known ways the screening value can differ from the regulatory quantity (all pessimistic)."""
     caveats = []
     if criterion["reference_bandwidth_hz"] > 4000 and frequency_hz < 15e9:
         caveats.append(
@@ -746,7 +667,6 @@ def evaluation_caveats(criterion, frequency_hz):
 
 
 def reference_pfd(frequency_profiles, intervals, orbit, geometry):
-    """Maximum pfd in 4 kHz and 1 MHz for cases without an applicable limit (expert context)."""
     if orbit == "gso":
         distance = geometry["slant_range_km"]
     else:
@@ -762,8 +682,6 @@ def reference_pfd(frequency_profiles, intervals, orbit, geometry):
         result[f"max_pfd_db_per_{bandwidth}_hz"] = None if best is None else round(best - spreading_db(distance), 2)
     return result
 
-
-# ----------------------------------------------------------------------------- run
 
 def _read_jsonl(path):
     with path.open(encoding="utf-8") as stream:

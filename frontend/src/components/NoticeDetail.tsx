@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
 import { Notice, label } from "../data";
-import { coord, limitWord, margin, num, withUnit } from "../format";
-import { go, href } from "../router";
+import { coord, deadlineText, limitWord, longDate, margin, num, withUnit } from "../format";
+import { go } from "../router";
 import { queueQuestion } from "../chatStore";
 import { adminRef, noticeRef, stationRef } from "../links";
-import { InlineText, Ref } from "./RichText";
+import { Ref } from "./RichText";
 import { StationTable } from "./StationTable";
 import { BackIcon } from "./Icons";
 
@@ -49,12 +49,19 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
       </Ref>,
     ],
     [space ? "Notice" : "Assignment", notice.noticeId],
-    ["Provision", notice.provision],
-    ["Protected band", notice.band],
+    ["ITU procedure", notice.provision],
+    [space ? "Finnish protected band" : "Frequency", notice.band],
     ["Reference bandwidth", notice.referenceBandwidth],
   ];
   if (notice.publicationDate) facts.push(["Published", notice.publicationDate]);
-  if (notice.elevationDeg !== null) facts.push(["Worst elevation", num(notice.elevationDeg) + "°"]);
+  if (space)
+    facts.push([
+      "Response deadline",
+      notice.responseDeadline?.date
+        ? `${longDate(notice.responseDeadline.date)}, ${deadlineText(notice.responseDeadline.date)}, ${notice.responseDeadline.rule}`
+        : "None, notification",
+    ]);
+  if (notice.elevationDeg !== null) facts.push(["Elevation at worst case", num(notice.elevationDeg) + "°"]);
   if (notice.distanceKm !== undefined) facts.push(["Distance to Finland", num(notice.distanceKm) + " km"]);
   if (space) facts.push(["Cases of concern", String(notice.casesOfConcern)]);
 
@@ -104,15 +111,21 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
 
       <section className="grid2">
         <div>
-          <h2>{space ? "PFD vs limit" : "Field strength vs threshold"}</h2>
+          <h2>{space ? "Calculated PFD and limit" : "Calculated field strength and threshold"}</h2>
           <Bars notice={notice} />
         </div>
         <div>
-          <h2>Governing rule</h2>
+          <h2>{space ? "Applicable limit" : "Applicable threshold"}</h2>
           <div className="rule">
             <p className="strong">{notice.rule.id || "No governing rule"}</p>
             {notice.rule.text && <p>{notice.rule.text}</p>}
             <p>{[c.document, c.provision, ...pages].filter(Boolean).join(", ")}</p>
+            {notice.nationalContext && (
+              <p>
+                Finnish use in M4: mobile service {label(notice.nationalContext.mobileInFinland).toLowerCase()}
+                {notice.nationalContext.m4Bands.length > 0 && ` in ${notice.nationalContext.m4Bands.join(", ")}`}
+              </p>
+            )}
             {c.url && (
               <p>
                 <a href={c.url} target="_blank" rel="noreferrer">
@@ -125,56 +138,20 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
       </section>
 
       <section>
-        <h2>{space ? "Affected Finnish stations" : "Assessment points"}</h2>
+        <h2>{space ? "Affected Finnish stations" : "Calculation points"}</h2>
         <StationTable notice={notice} limit={STATION_PAGE} />
       </section>
 
-      <section className="grid2">
-        <div>
-          <h2>Assumptions</h2>
-          <ul className="list">
-            {notice.assumptions.map((a) => (
-              <li key={a}>
-                <InlineText text={a} />
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h2>Caveats</h2>
-          <ul className="list">
-            {notice.caveats.map((c) => (
-              <li key={c}>
-                <InlineText text={c} />
-              </li>
-            ))}
-          </ul>
-          {notice.otherCaseCaveats && notice.otherCaseCaveats.length > 0 && (
-            <>
-              <h3>Other cases of this notice</h3>
-              <p>These apply to other cases of this notice, not to the worst case values above.</p>
-              <ul className="list">
-                {notice.otherCaseCaveats.map((c) => (
-                  <li key={c.text}>
-                    <InlineText text={`${c.text} (${c.cases} ${c.cases === 1 ? "case" : "cases"})`} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </section>
-
       <section>
-        <h2>Source rows</h2>
+        <h2>Source data</h2>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Dataset</th>
+                <th>File</th>
                 <th>Table</th>
-                <th>Rows</th>
-                <th>SHA256</th>
+                <th>Row numbers</th>
+                <th>SHA-256 checksum</th>
               </tr>
             </thead>
             <tbody>
@@ -191,9 +168,6 @@ export function NoticeDetail({ notice }: { notice: Notice }) {
         </div>
       </section>
 
-      <section>
-        <a href={href({ view: "home" })}>Back to all notices</a>
-      </section>
     </div>
   );
 }
